@@ -697,30 +697,7 @@
       cursor: pointer;
       transition: all .18s;
     }
-    .btn-mode.active {
-      background: rgba(122,207,255,.14);
-      border-color: var(--blue);
-      color: var(--blue);
-    }
-    .btn-done {
-      padding: 8px 10px;
-      background: rgba(255,122,178,.13);
-      border: 1px solid var(--pink);
-      border-radius: 10px;
-      color: var(--pink);
-      font-family: 'Noto Sans KR', sans-serif;
-      font-size: 11.5px;
-      cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 7px;
-      align-items: center;
-      flex-shrink: 0;
-    }
+    /* (index2) removed unused: .btn-mode.active / .btn-done / .input-row */
     /* (index2) removed chat input / send / API buttons */
 
     /* ───────────── CHARACTER (index2) ───────────── */
@@ -1210,7 +1187,7 @@ const STAGES = [
 const GENDERS = ['남성', '여성'];
 
 /* ───────────── STATE ───────────── */
-let S = { nick:'', school:'', major:'', courses:[], curIdx:0, mode:'task', tasks:[], study:{ completed:0 } };
+let S = { nick:'', school:'', major:'', courses:[], curIdx:0, tasks:[], study:{ completed:0 } };
 
 /* ───────────── STORAGE ───────────── */
 function save() { localStorage.setItem('dkdk', JSON.stringify(S)); }
@@ -1259,7 +1236,7 @@ function goToReg() {
 
 /* ───────────── SCREEN 2 ───────────── */
 function pushCourse() {
-  S.courses.push({ name:'', gender:'남성', persona:'츤데레', affection:0, taskPending:false, taskText:'', lastText:'' });
+  S.courses.push({ name:'', gender:'남성', persona:'츤데레', affection:0 });
 }
 
 function addCourse() {
@@ -1343,7 +1320,6 @@ function selectCourse(i) {
   // Reset mode UI
   document.getElementById('btn-task').classList.add('active');
   document.getElementById('btn-qna').classList.remove('active');
-  S.mode = 'task';
   // If task-register flow is active, re-say current step line in new persona.
   if (_flow && _flow.active) {
     const persona = personaOfCourse(i);
@@ -1367,24 +1343,24 @@ function updateCharImage(course) {
 
   const gender  = normalizeFilePart(course && course.gender);
   const persona = normalizeFilePart(course && course.persona);
-  const src = './images/characters/' + gender + '_' + persona + '.png';
+  const base = './images/characters/' + gender + '_' + persona + '.png';
+  const candidates = [base, base.normalize('NFD')];
+  let idx = 0;
 
   fb.style.display = 'none';
   img.style.display = 'block';
   img.onerror = function () {
-    // Try default image once, then fall back to text.
-    if (img.getAttribute('data-tried-default') === '1') {
-      img.style.display = 'none';
-      fb.style.display = 'flex';
-      fb.textContent = '이미지 준비중';
-      img.onerror = null;
+    idx += 1;
+    if (idx < candidates.length) {
+      img.src = candidates[idx];
       return;
     }
-    img.setAttribute('data-tried-default', '1');
-    img.src = './images/characters/default.png';
+    img.style.display = 'none';
+    fb.style.display = 'flex';
+    fb.textContent = '이미지 준비중';
+    img.onerror = null;
   };
-  img.removeAttribute('data-tried-default');
-  img.src = src;
+  img.src = candidates[0];
 }
 
 /* ───────────── GUIDE ───────────── */
@@ -1398,48 +1374,7 @@ function showGuide(msg, ms) {
   _guideTid = setTimeout(() => { el.classList.remove('show'); }, ms || 3800);
 }
 
-function maybeGuideForRefusal() {
-  const c = S.courses[S.curIdx];
-  if (!c) return;
-  if ((c.affection || 0) < 20) {
-    showGuide('호감도가 낮아 대화를 거절당했습니다. [내 과제함]에서 과제를 완료해 점수를 쌓아보세요!', 5200);
-  } else {
-    showGuide('캐릭터가 잠시 대답을 거부했어요. [과제 전달]로 새 과제를 받아보거나, 잠시 후 다시 시도해보세요.', 5200);
-  }
-}
-
-/* ───────────── TASKS DRAWER ───────────── */
-function openTasks() { renderTaskDrawer(); document.getElementById('tasks-drawer').classList.add('show'); }
-function closeTasks(byBackdrop) { document.getElementById('tasks-drawer').classList.remove('show'); }
-
-function renderTaskDrawer() {
-  const list = document.getElementById('tasks-list');
-  if (!list) return;
-  list.innerHTML = '';
-
-  const pending = S.courses.map((c, idx) => ({ c, idx })).filter(x => x.c && x.c.taskPending);
-  if (!pending.length) {
-    const empty = document.createElement('div');
-    empty.className = 'task-item';
-    empty.innerHTML = `<div class="task-course">진행 중인 과제가 없어요</div><div class="task-text">[과제 전달]을 눌러 새 과제를 받아보세요.</div>`;
-    list.appendChild(empty);
-    return;
-  }
-
-  pending.forEach(({ c, idx }) => {
-    const item = document.createElement('div');
-    item.className = 'task-item';
-    const title = (c.name || `과목${idx + 1}`);
-    item.innerHTML = `
-      <div class="task-top">
-        <div class="task-course">${esc(title)}</div>
-        <button class="btn-task-done" onclick="completeTaskFor(${idx})">완료 +10</button>
-      </div>
-      <div class="task-text">${esc(c.taskText || '과제 내용이 아직 없어요. [과제 전달]을 눌러 받아보세요.')}</div>
-    `;
-    list.appendChild(item);
-  });
-}
+// (index2) removed dead code: maybeGuideForRefusal + legacy tasks drawer
 
 /* ───────────── AFFECTION ───────────── */
 function getStage(v) {
@@ -1537,12 +1472,6 @@ function flashNotif(msg) {
 
 /* ───────────── MODE ───────────── */
 // (index2) Mode switches are handled by explicit buttons.
-
-/* ───────────── COMPLETE TASK ───────────── */
-async function completeTaskFor(i) {
-  // index2 uses S.tasks completion; keep for compatibility.
-  return;
-}
 
 // (index2) No send message input.
 
@@ -1719,8 +1648,6 @@ function showAutoLineForCourse(i) {
     const key = autoKeyForDays(d);
     line = t.name + ', ' + (PERSONA_LINES[key][persona] || PERSONA_LINES[key]['츤데레']);
   }
-  const c = S.courses[i];
-  c.lastText = line;
   save();
   hideForm();
   typeText(line);
@@ -2099,14 +2026,27 @@ function updateStudyChar(){
   const c=S.courses[S.curIdx]||{}; const gender=normalizeFilePart(c.gender); const persona=normalizeFilePart(c.persona);
   const studySrc='./images/characters/'+gender+'_'+persona+'_study.png';
   const normalSrc='./images/characters/'+gender+'_'+persona+'.png';
+  const studyCandidates = [studySrc, studySrc.normalize('NFD')];
+  const normalCandidates = [normalSrc, normalSrc.normalize('NFD')];
   const img=document.getElementById('study-char-img'); const fb=document.getElementById('study-char-fallback');
   if(!img||!fb) return;
   fb.style.display='none'; img.style.display='block';
+  let triedStudy = 0;
+  let triedNormal = 0;
   img.onerror=function(){
-    if(img.getAttribute('data-tried-normal')==='1'){ img.style.display='none'; fb.style.display='flex'; fb.textContent='이미지 준비중'; img.onerror=null; return; }
-    img.setAttribute('data-tried-normal','1'); img.src=normalSrc;
+    if (triedStudy < studyCandidates.length - 1) {
+      triedStudy += 1;
+      img.src = studyCandidates[triedStudy];
+      return;
+    }
+    if (triedNormal < normalCandidates.length) {
+      img.src = normalCandidates[triedNormal];
+      triedNormal += 1;
+      return;
+    }
+    img.style.display='none'; fb.style.display='flex'; fb.textContent='이미지 준비중'; img.onerror=null;
   };
-  img.removeAttribute('data-tried-normal'); img.src=studySrc;
+  img.src=studyCandidates[0];
 }
 function fmtTime(sec){ sec=Math.max(0,sec|0); return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0'); }
 function renderStudyUI(line){
@@ -2162,11 +2102,6 @@ function studyReset(){
 
 /* ───────────── TYPING (한 글자씩 순차) ───────────── */
 let _tid = null;
-
-function showLoading() {
-  if (_tid) { clearTimeout(_tid); _tid = null; }
-  document.getElementById('dlg-text').innerHTML = '<span class="dots"></span>';
-}
 
 function typeText(text) {
   if (_tid) { clearTimeout(_tid); _tid = null; }

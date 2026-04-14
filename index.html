@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a0f2e">
   <title>두근두근! 전공 연애 시뮬레이션</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -23,7 +27,7 @@
       --text-sub: rgba(255,200,220,0.6);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
     html, body {
       height: 100%;
@@ -35,6 +39,8 @@
       justify-content: center;
       overflow: hidden;
     }
+    html { touch-action: manipulation; }
+    button { touch-action: manipulation; }
 
     #app {
       width: 100vw;
@@ -488,18 +494,18 @@
     .char-holder {
       position: absolute;
       left: 50%;
-      transform: translateX(-50%);
-      width: min(92vw, 390px);
-      height: 78%;
-      top: 8%;
+      transform: translate(-50%, 54px);
+      width: 100%;
+      height: 100%;
+      bottom: 0;
       z-index: 9; /* dialog(10)보다 아래라 하단이 자연스럽게 가려짐 */
       pointer-events: none;
     }
     .char-img {
       width: 100%;
-      height: 100%;
+      height: 93%;
       object-fit: cover;
-      object-position: center 18%;
+      object-position: center top;
       display: block;
     }
     .char-fallback {
@@ -677,6 +683,7 @@
       display: flex;
       gap: 6px;
       flex-shrink: 0;
+      padding-bottom: env(safe-area-inset-bottom);
     }
     .btn-mode {
       flex: 1;
@@ -690,78 +697,314 @@
       cursor: pointer;
       transition: all .18s;
     }
-    .btn-mode.active {
-      background: rgba(122,207,255,.14);
-      border-color: var(--blue);
-      color: var(--blue);
+    /* (index2) removed unused: .btn-mode.active / .btn-done / .input-row */
+    /* (index2) removed chat input / send / API buttons */
+
+    /* ───────────── CHARACTER (index2) ───────────── */
+    .char-holder {
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, 54px);
+      width: 100%;
+      height: 100%;
+      bottom: 0;
+      z-index: 9;
+      pointer-events: none;
     }
-    .btn-done {
-      padding: 8px 10px;
-      background: rgba(255,122,178,.13);
-      border: 1px solid var(--pink);
-      border-radius: 10px;
-      color: var(--pink);
-      font-family: 'Noto Sans KR', sans-serif;
-      font-size: 11.5px;
-      cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
+    .char-img {
+      width: 100%;
+      height: 93%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
     }
 
-    .input-row {
-      display: flex;
-      gap: 7px;
-      align-items: center;
+    /* ───────────── TASK REGISTER INLINE FORM (index2) ───────────── */
+    #dlg-form {
+      display: none;
       flex-shrink: 0;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,122,178,.18);
+      border-radius: 14px;
+      padding: 10px;
+      gap: 8px;
+      flex-direction: column;
     }
-    .dlg-input {
-      flex: 1;
-      background: rgba(255,255,255,.06);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 9px 13px;
-      color: var(--text-main);
-      font-family: 'Noto Sans KR', sans-serif;
-      font-size: 14px;
-      outline: none;
-      transition: border-color .2s;
-    }
-    .dlg-input::placeholder { color: var(--text-sub); }
-    .dlg-input:focus { border-color: var(--pink); }
-    .btn-send {
-      width: 38px;
-      height: 38px;
-      background: var(--pink);
+
+    /* ───────────── CALENDAR POPUP (index2) ───────────── */
+    .btn-cal {
+      position: absolute;
+      top: 0;
+      right: 10px;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(255,122,178,.08), rgba(122,207,255,.05));
       border: none;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 17px;
+      border-radius: 12px;
+      width: 72px;
+      height: 56px;
+      padding: 0;
+      color: #FF7AB2;
+      font-size: 26px;
       cursor: pointer;
+      line-height: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+      backdrop-filter: blur(6px);
+      box-shadow:
+        0 8px 22px rgba(0,0,0,.18),
+        0 1px 0 rgba(255,255,255,.06) inset;
     }
-    .btn-send:disabled {
-      opacity: .5;
-      cursor: not-allowed;
+    .btn-cal:active { opacity: .85; }
+
+    /* ───────────── STUDY DATE BUTTONS (index2) ───────────── */
+    .study-btn {
+      border-radius: 12px;
+      font-family: 'Noto Sans KR', sans-serif;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: filter .15s, transform .08s, opacity .15s;
+      white-space: nowrap;
+    }
+    .study-btn:hover { filter: brightness(1.08); }
+    .study-btn:active { transform: scale(.98); opacity: .92; }
+
+    .study-btn-start {
+      background: rgba(255,122,178,0.25);
+      border: 1px solid rgba(255,122,178,0.6);
+      color: #FF7AB2;
+    }
+    .study-btn-pause {
+      background: rgba(122,207,255,0.15);
+      border: 1px solid rgba(122,207,255,0.4);
+      color: #7ACFFF;
+    }
+    .study-btn-reset {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.45);
     }
 
-    .btn-get-task {
-      padding: 8px 10px;
-      background: rgba(255,122,178,.14);
-      border: 1px solid rgba(255,122,178,.35);
-      border-radius: 10px;
-      color: var(--pink);
-      font-family: 'Noto Sans KR', sans-serif;
-      font-size: 11.5px;
+    .cal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 4000;
+      padding: 18px;
+    }
+    .cal-overlay.show { display: flex; }
+    .cal-card {
+      background: rgba(10,6,20,0.97);
+      border: 1px solid rgba(255,122,178,0.3);
+      border-radius: 16px;
+      width: 85%;
+      max-width: 340px;
+      padding: 14px 14px 12px;
+    }
+    .cal-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .cal-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 1;
+      justify-content: center;
+      color: rgba(255,255,255,.86);
+      font-size: 12px;
       font-weight: 800;
+    }
+    .cal-nav button {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.86);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .cal-close {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.86);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .cal-dow {
+      text-align: center;
+      font-size: 10px;
+      color: rgba(255,255,255,.55);
+      padding: 4px 0;
+      font-weight: 800;
+    }
+    .cal-day {
+      position: relative;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.86);
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 6px;
+      font-size: 12px;
+      font-weight: 900;
+      user-select: none;
+    }
+    .cal-day.muted { opacity: .35; cursor: default; }
+    .cal-day.today {
+      border-color: rgba(255,122,178,.75);
+      box-shadow: 0 0 0 1px rgba(255,122,178,.25) inset;
+    }
+    .cal-day.selected {
+      background: rgba(255,122,178,.14);
+      border-color: rgba(255,122,178,.35);
+    }
+    .cal-dots {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      bottom: 6px;
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .cal-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      opacity: .95;
+    }
+    .cal-dot.done { opacity: .35; }
+    .cal-list {
+      max-height: 160px;
+      overflow: auto;
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding-top: 10px;
+    }
+    .cal-item {
+      font-size: 12px;
+      line-height: 1.3;
+      color: rgba(255,255,255,.86);
+      padding: 6px 4px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .cal-item:last-child { border-bottom: none; }
+    .cal-pill {
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.82);
+      flex-shrink: 0;
+    }
+    .cal-item.done { opacity: .55; text-decoration: line-through; }
+
+    /* ───────────── TASK EDIT MODAL (index2) ───────────── */
+    .btn-task-edit {
+      background: rgba(122,207,255,0.12);
+      border: 1px solid rgba(122,207,255,0.3);
+      color: #7ACFFF;
+      font-size: 12px;
+      border-radius: 8px;
+      padding: 4px 10px;
       cursor: pointer;
       white-space: nowrap;
-      flex-shrink: 0;
-      transition: opacity .15s, transform .08s;
     }
-    .btn-get-task:active { transform: scale(.98); opacity: .92; }
+    .btn-task-edit:active { opacity: .9; }
+
+    .edit-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+      padding: 18px;
+    }
+    .edit-overlay.show { display: flex; }
+    .edit-card {
+      background: rgba(10,6,20,0.97);
+      border: 1px solid rgba(255,122,178,0.3);
+      border-radius: 16px;
+      width: 85%;
+      max-width: 340px;
+      padding: 20px;
+    }
+    .edit-title {
+      font-family: 'HSBombaram', cursive;
+      color: #FF7AB2;
+      font-size: 20px;
+      margin-bottom: 14px;
+    }
+    .edit-field {
+      width: 100%;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,122,178,.18);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: rgba(255,255,255,.92);
+      font-size: 13px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    .edit-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .edit-save {
+      flex: 1;
+      background: rgba(255,122,178,0.25);
+      border: 1px solid rgba(255,122,178,0.6);
+      color: #FF7AB2;
+      border-radius: 12px;
+      font-family: 'Noto Sans KR', sans-serif;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .edit-cancel {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.45);
+      border-radius: 12px;
+      font-family: 'Noto Sans KR', sans-serif;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
 
     .dots::after {
       content: '.';
@@ -828,9 +1071,12 @@
       <span class="fixed-top-title">수강신청</span>
     </div>
     <div class="scroll-area" id="course-list"></div>
-    <div class="fixed-bottom">
-      <button class="btn-add" onclick="addCourse()">+ 과목 추가</button>
-      <button class="btn-reg-done" onclick="finishReg()">수강신청 완료</button>
+    <div class="fixed-bottom" style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;gap:10px;">
+        <button class="btn-add" onclick="addCourse()">+ 과목 추가</button>
+        <button class="btn-reg-done" onclick="finishReg()">수강신청 완료</button>
+      </div>
+      <button onclick="resetGame()" style="width:100%;padding:9px 10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.2);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">처음부터 다시 시작</button>
     </div>
   </div>
 
@@ -856,8 +1102,8 @@
           <span id="aff-num">0 / 100</span>
         </div>
       </div>
+      <button class="btn-cal" title="캘린더" onclick="openCalendar()">📅</button>
     </div>
-    <button class="btn-reset" title="초기화" onclick="resetGame()">🏠</button>
     <div class="char-holder">
       <img id="char-img" class="char-img" alt="캐릭터">
       <div id="char-fallback" class="char-fallback">이미지 준비중</div>
@@ -868,21 +1114,43 @@
         <button class="btn-tasks" onclick="openTasks()">내 과제함</button>
       </div>
       <div class="dlg-text" id="dlg-text"></div>
+      <div id="dlg-form"></div>
       <div class="guide" id="guide"></div>
       <div class="mode-row">
-        <button class="btn-mode active" id="btn-task" onclick="setMode('task')">📌 과제 전달</button>
-        <button class="btn-mode"        id="btn-qna"  onclick="setMode('qna')">💬 개념 질문</button>
-        <button class="btn-get-task" onclick="requestTask()">과제 받기</button>
-      </div>
-      <div class="input-row">
-        <input class="dlg-input" id="dlg-input"
-               placeholder="메시지를 입력하세요..."
-               onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); sendMsg(); }">
-        <button class="btn-send" id="btn-send" onclick="sendMsg()">→</button>
+        <button class="btn-mode active" id="btn-task" onclick="startTaskRegister()">📝 과제 등록</button>
+        <button class="btn-mode"        id="btn-qna"  onclick="openStudyDate()">⏰ 공부 데이트</button>
       </div>
     </div>
   </div>
 
+</div>
+
+<div class="cal-overlay" id="cal-overlay" onclick="closeCalendar(true)">
+  <div class="cal-card" onclick="event.stopPropagation()">
+    <div class="cal-top">
+      <div class="cal-nav">
+        <button onclick="calMove(-1)">← 이전달</button>
+        <div id="cal-month" style="min-width:96px;text-align:center;"></div>
+        <button onclick="calMove(1)">다음달 →</button>
+      </div>
+      <button class="cal-close" onclick="closeCalendar(false)">닫기</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-list" id="cal-list"></div>
+  </div>
+</div>
+
+<div class="edit-overlay" id="edit-overlay" onclick="closeEditTask(true)">
+  <div class="edit-card" onclick="event.stopPropagation()">
+    <div class="edit-title">과제 수정</div>
+    <input id="edit-name" class="edit-field" placeholder="과제명">
+    <input id="edit-deadline" class="edit-field" type="date">
+    <textarea id="edit-detail" class="edit-field" rows="4" placeholder="상세내용"></textarea>
+    <div class="edit-actions">
+      <button class="edit-save" onclick="saveEditTask()">저장</button>
+      <button class="edit-cancel" onclick="closeEditTask(false)">취소</button>
+    </div>
+  </div>
 </div>
 
 <div class="tasks-drawer" id="tasks-drawer" onclick="closeTasks(true)">
@@ -897,36 +1165,42 @@
 
 <script>
 /* ───────────── CONSTANTS ───────────── */
-const GEMINI_KEY = 'AIzaSyCFLddZKpx8e6CzjLGuQsW38Mt2jXQPn-4';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_KEY;
+// (index2) No AI API: all lines are hardcoded.
 
 const PERSONAS = [
   { name: '츤데레',  desc: '차갑게 굴지만 신경 씀' },
   { name: '단데레',  desc: '조용하지만 깊이 애정' },
   { name: '얀데레',  desc: '너만 바라보는 타입' },
   { name: '쿨데레',  desc: '냉정하지만 빈틈 있음' },
-  { name: '원기왕성',desc: '밝고 에너지 넘침' },
+  { name: '혈기왕성',desc: '밝고 에너지 넘침' },
   { name: '선배형',  desc: '의젓하고 믿음직함' },
 ];
 
 const STAGES = [
-  { min:  0, name: '첫 만남',    line: '...수강신청한 사람이 너야?' },
-  { min: 20, name: '안면 있음',  line: '뭐, 생각보다 열심히 하네.' },
-  { min: 40, name: '친밀감 형성',line: '오늘도 왔구나. ...기다렸어.' },
-  { min: 60, name: '독점욕 발생',line: '다른 과목이랑 같이 공부하지 마.' },
-  { min: 80, name: '엔딩 해금',  line: '...사실 처음부터 너만 봤어.' },
+  { min:  0, name: '아직 어색한 사이',       line: '...수강신청한 사람이 너야?' },
+  { min: 20, name: '조금씩 알아가는 사이',   line: '뭐, 생각보다 열심히 하네.' },
+  { min: 40, name: '제법 가까워진 사이',     line: '오늘도 왔구나. ...기다렸어.' },
+  { min: 60, name: '너만 생각하는 중',       line: '다른 과목이랑 같이 공부하지 마.' },
+  { min: 80, name: '특별한 사이 💕',         line: '...사실 처음부터 너만 봤어.' },
 ];
 
-const GENDERS = ['남성', '여성', '중성'];
+const GENDERS = ['남성', '여성'];
 
 /* ───────────── STATE ───────────── */
-let S = { nick:'', school:'', major:'', courses:[], curIdx:0, mode:'task' };
+let S = { nick:'', school:'', major:'', courses:[], curIdx:0, tasks:[], study:{ completed:0 } };
 
 /* ───────────── STORAGE ───────────── */
 function save() { localStorage.setItem('dkdk', JSON.stringify(S)); }
 function load() {
   try { const d = JSON.parse(localStorage.getItem('dkdk')||'null'); if(d) S = Object.assign(S,d); }
   catch(e){}
+  if (!S.tasks) S.tasks = [];
+  if (!S.study) S.study = { completed: 0 };
+  if (S.courses && S.courses.length) {
+    S.courses.forEach(c => {
+      if (c && c.gender === '중성') c.gender = '남성';
+    });
+  }
 }
 
 /* ───────────── SCREENS ───────────── */
@@ -962,7 +1236,7 @@ function goToReg() {
 
 /* ───────────── SCREEN 2 ───────────── */
 function pushCourse() {
-  S.courses.push({ name:'', gender:'중성', persona:'츤데레', affection:0, taskPending:false, taskText:'', lastText:'' });
+  S.courses.push({ name:'', gender:'남성', persona:'츤데레', affection:0 });
 }
 
 function addCourse() {
@@ -1013,6 +1287,8 @@ function finishReg() {
   const valid = S.courses.filter(c => c.name.trim());
   if (!valid.length) { alert('과목명을 최소 1개 이상 입력해주세요.'); return; }
   S.courses = valid; save();
+  S.curIdx = S.courses.length - 1;
+  save();
   show('game'); initGame();
 }
 
@@ -1040,13 +1316,20 @@ function selectCourse(i) {
   updateAffUI(c.affection);
   updateCharImage(c);
   renderCourseMenu();
+  positionCalBtn();
   // Reset mode UI
   document.getElementById('btn-task').classList.add('active');
   document.getElementById('btn-qna').classList.remove('active');
-  S.mode = 'task';
-  // API 호출 최소화: 같은 과목 재선택 시 기존 대사 유지
-  if (c.lastText && String(c.lastText).trim()) typeText(c.lastText);
-  else typeText(getStage(c.affection).line);
+  // If task-register flow is active, re-say current step line in new persona.
+  if (_flow && _flow.active) {
+    const persona = personaOfCourse(i);
+    if (_flow.step === 1) typeText(REG_LINES.step1[persona] || REG_LINES.step1['츤데레']);
+    else if (_flow.step === 2) typeText(REG_LINES.step2[persona] || REG_LINES.step2['츤데레']);
+    else if (_flow.step === 3) typeText(REG_LINES.step3[persona] || REG_LINES.step3['츤데레']);
+    else showAutoLineForCourse(i);
+  } else {
+    showAutoLineForCourse(i);
+  }
 }
 
 function normalizeFilePart(s) {
@@ -1060,24 +1343,24 @@ function updateCharImage(course) {
 
   const gender  = normalizeFilePart(course && course.gender);
   const persona = normalizeFilePart(course && course.persona);
-  const src = './images/characters/' + gender + '_' + persona + '.png';
+  const base = './images/characters/' + gender + '_' + persona + '.png';
+  const candidates = [base, base.normalize('NFD')];
+  let idx = 0;
 
   fb.style.display = 'none';
   img.style.display = 'block';
   img.onerror = function () {
-    // Try default image once, then fall back to text.
-    if (img.getAttribute('data-tried-default') === '1') {
-      img.style.display = 'none';
-      fb.style.display = 'flex';
-      fb.textContent = '이미지 준비중';
-      img.onerror = null;
+    idx += 1;
+    if (idx < candidates.length) {
+      img.src = candidates[idx];
       return;
     }
-    img.setAttribute('data-tried-default', '1');
-    img.src = './images/characters/default.png';
+    img.style.display = 'none';
+    fb.style.display = 'flex';
+    fb.textContent = '이미지 준비중';
+    img.onerror = null;
   };
-  img.removeAttribute('data-tried-default');
-  img.src = src;
+  img.src = candidates[0];
 }
 
 /* ───────────── GUIDE ───────────── */
@@ -1091,48 +1374,7 @@ function showGuide(msg, ms) {
   _guideTid = setTimeout(() => { el.classList.remove('show'); }, ms || 3800);
 }
 
-function maybeGuideForRefusal() {
-  const c = S.courses[S.curIdx];
-  if (!c) return;
-  if ((c.affection || 0) < 20) {
-    showGuide('호감도가 낮아 대화를 거절당했습니다. [내 과제함]에서 과제를 완료해 점수를 쌓아보세요!', 5200);
-  } else {
-    showGuide('캐릭터가 잠시 대답을 거부했어요. [과제 전달]로 새 과제를 받아보거나, 잠시 후 다시 시도해보세요.', 5200);
-  }
-}
-
-/* ───────────── TASKS DRAWER ───────────── */
-function openTasks() { renderTaskDrawer(); document.getElementById('tasks-drawer').classList.add('show'); }
-function closeTasks(byBackdrop) { document.getElementById('tasks-drawer').classList.remove('show'); }
-
-function renderTaskDrawer() {
-  const list = document.getElementById('tasks-list');
-  if (!list) return;
-  list.innerHTML = '';
-
-  const pending = S.courses.map((c, idx) => ({ c, idx })).filter(x => x.c && x.c.taskPending);
-  if (!pending.length) {
-    const empty = document.createElement('div');
-    empty.className = 'task-item';
-    empty.innerHTML = `<div class="task-course">진행 중인 과제가 없어요</div><div class="task-text">[과제 전달]을 눌러 새 과제를 받아보세요.</div>`;
-    list.appendChild(empty);
-    return;
-  }
-
-  pending.forEach(({ c, idx }) => {
-    const item = document.createElement('div');
-    item.className = 'task-item';
-    const title = (c.name || `과목${idx + 1}`);
-    item.innerHTML = `
-      <div class="task-top">
-        <div class="task-course">${esc(title)}</div>
-        <button class="btn-task-done" onclick="completeTaskFor(${idx})">완료 +10</button>
-      </div>
-      <div class="task-text">${esc(c.taskText || '과제 내용이 아직 없어요. [과제 전달]을 눌러 받아보세요.')}</div>
-    `;
-    list.appendChild(item);
-  });
-}
+// (index2) removed dead code: maybeGuideForRefusal + legacy tasks drawer
 
 /* ───────────── AFFECTION ───────────── */
 function getStage(v) {
@@ -1229,181 +1471,637 @@ function flashNotif(msg) {
 }
 
 /* ───────────── MODE ───────────── */
-function setMode(m) {
-  S.mode = m;
-  document.getElementById('btn-task').classList.toggle('active', m==='task');
-  document.getElementById('btn-qna').classList.toggle('active',  m==='qna');
-  // 모드 전환만 하고 자동 API 호출은 하지 않음
-}
+// (index2) Mode switches are handled by explicit buttons.
 
-function requestTask() {
-  // 버튼으로만 과제 요청(API 호출)
-  if (S.mode !== 'task') setMode('task');
-  triggerTask();
-}
+// (index2) No send message input.
 
-async function triggerTask() {
-  const c = S.courses[S.curIdx];
-  if (!canCallGeminiOrGuide()) return;
-  c.taskPending = true; save();
-  const stage = getStage(c.affection);
-  const sys = `당신은 ${c.name} 과목이 ${c.gender} 미연시 캐릭터로 의인화된 존재입니다. 성격은 ${c.persona}이고 호감도 ${c.affection}/100, 단계는 ${stage.name}입니다. 이 단계에 맞는 감정으로 과제/공지를 2-3문장 반말로 전달하세요.`;
-  showLoading();
-  const t = await gemini(sys, '오늘의 과제를 알려줘');
-  c.taskText = t;
-  c.lastText = t;
-  save();
-  typeText(t);
-  // If user has task drawer open, refresh it.
-  const dr = document.getElementById('tasks-drawer');
-  if (dr && dr.classList.contains('show')) renderTaskDrawer();
-}
+/* ───────────── (index2) HARD-CODED SYSTEMS ───────────── */
+const COURSE_COLORS = ['#FF7AB2', '#7ACFFF', '#a78bfa', '#34d399', '#fbbf24', '#e879f9'];
 
-/* ───────────── COMPLETE TASK ───────────── */
-async function completeTaskFor(i) {
-  const c = S.courses[i];
-  if (!c) return;
-  if (!canCallGeminiOrGuide()) return;
-  c.taskPending = false; save();
-  // If completing a non-selected course, still apply affection to that course.
-  if (S.curIdx === i) changeAff(10);
-  else {
-    const prevName = getStage(c.affection).name;
-    c.affection = Math.max(0, Math.min(100, (c.affection||0) + 10));
-    save();
-    if (S.curIdx === i) updateAffUI(c.affection);
-    flashNotif('+10 호감도 상승!');
-    if (getStage(c.affection).name !== prevName) {
-      setTimeout(() => typeText(getStage(c.affection).line), 600);
-    }
+const PERSONA_LINES = {
+  noTask: {
+    '츤데레': "...지금은 과제 없어. 뭐, 다행이지.",
+    '단데레': "...지금은 쉬어도 돼.",
+    '얀데레': "과제 없어! 나랑 놀자!",
+    '쿨데레': "현재 과제 없음. 예습 권장.",
+    '혈기왕성': "지금은 자유 시간! 파이팅!",
+    '선배형': "지금은 여유 있어. 예습해두자."
+  },
+  gt7: {
+    '츤데레': "있는 거 알지?",
+    '단데레': "천천히 준비해.",
+    '얀데레': "같이 준비하자!",
+    '쿨데레': "기한 확인해.",
+    '혈기왕성': "파이팅! 아직 여유 있어!",
+    '선배형': "미리 준비하는 게 좋아."
+  },
+  le7: {
+    '츤데레': "슬슬 해야 할 것 같은데.",
+    '단데레': "일주일 남았어. 서두르자.",
+    '얀데레': "일주일이야! 같이 하자!",
+    '쿨데레': "D-7. 계획 세워.",
+    '혈기왕성': "일주일! 같이 달려보자!",
+    '선배형': "이번 주 안에 시작해두자."
+  },
+  le3: {
+    '츤데레': "3일밖에 없어. 빨리해.",
+    '단데레': "3일 남았어. 걱정돼.",
+    '얀데레': "3일 남았어! 지금 당장 해!",
+    '쿨데레': "D-3. 지금 시작해.",
+    '혈기왕성': "3일! 지금 당장 시작하자!",
+    '선배형': "3일 남았어. 서두르자."
+  },
+  d1: {
+    '츤데레': "내일까지야. 설마 아직도?",
+    '단데레': "내일이야. 괜찮아?",
+    '얀데레': "내일이야! 지금 당장!",
+    '쿨데레': "D-1. 오늘 안에 완료해.",
+    '혈기왕성': "내일까지야! 지금 해!",
+    '선배형': "오늘 안에 끝내자."
+  },
+  d0: {
+    '츤데레': "오늘까지야. 진짜로.",
+    '단데레': "오늘이야. 할 수 있어.",
+    '얀데레': "오늘이야! 꼭 해야 해!",
+    '쿨데레': "오늘 마감. 지금 제출해.",
+    '혈기왕성': "오늘이야! 파이팅!",
+    '선배형': "오늘 마감이야. 같이 끝내자."
   }
-  const stage = getStage(c.affection);
-  const sys = `당신은 ${c.name} 과목이 ${c.gender} 미연시 캐릭터입니다. 성격은 ${c.persona}, 호감도 ${c.affection}/100입니다. 학생이 과제를 완료했을 때 ${stage.name} 단계에 맞는 반응을 2문장 반말로 해주세요.`;
-  showLoading();
-  const t = await gemini(sys, '과제 완료했어');
-  c.lastText = t;
+};
+
+const REG_LINES = {
+  step1: {
+    '츤데레': "나랑 약속한 거 있잖아... 뭐였더라?",
+    '단데레': "...저번에 얘기했던 거 있잖아. 뭐였더라?",
+    '얀데레': "우리 같이 할 거! 뭐였는지 기억해?",
+    '쿨데레': "해야 할 거 정리해두자. 뭔데?",
+    '혈기왕성': "우리 같이 할 거 적어두자! 뭐였지?",
+    '선배형': "이번에 해야 할 거 정리하자. 어떤 거야?"
+  },
+  step2: {
+    '츤데레': "언제까지였지... 설마 잊은 건 아니지?",
+    '단데레': "...언제까지야? 같이 기억해두자.",
+    '얀데레': "언제까지야! 절대 잊으면 안 돼!",
+    '쿨데레': "마감일은?",
+    '혈기왕성': "언제까지야? 같이 파이팅하자!",
+    '선배형': "마감일은 언제야? 계획 세우자."
+  },
+  step3: {
+    '츤데레': "자세한 내용이 뭐였는지... 말해봐.",
+    '단데레': "...자세히 적어둘게. 말해줘.",
+    '얀데레': "자세한 내용도 알려줘! 다 기억할게!",
+    '쿨데레': "상세내용 있으면 입력해.",
+    '혈기왕성': "자세한 내용도 알려줘! 완벽하게 준비하자!",
+    '선배형': "상세내용 있으면 적어둬. 내가 챙길게."
+  },
+  done: {
+    '츤데레': "...잊지 마. 우리 약속이야.",
+    '단데레': "...꼭 같이 해내자.",
+    '얀데레': "약속이야! 꼭 같이 해야 해!",
+    '쿨데레': "기억 완료. 기한 지켜.",
+    '혈기왕성': "좋았어! 같이 해내자! 파이팅!",
+    '선배형': "기억했어. 내가 옆에서 챙겨줄게."
+  }
+};
+
+const STUDY_LINES = {
+  focus: {
+    '츤데레': "...집중해. 딴짓하지 마.",
+    '단데레': "...같이 있을게.",
+    '얀데레': "나만 생각하면서 공부해!",
+    '쿨데레': "효율적으로. 25분 집중.",
+    '혈기왕성': "같이 파이팅! 할 수 있어!",
+    '선배형': "집중해. 내가 옆에 있어."
+  },
+  focusDone: {
+    '츤데레': "...수고했어. 뭐, 잘 했네.",
+    '단데레': "...고생했어. 잠깐 쉬어.",
+    '얀데레': "잘 했어! 나만 보면서 했지?",
+    '쿨데레': "25분 완료. 5분 휴식해.",
+    '혈기왕성': "해냈어! 최고야! 잠깐 쉬자!",
+    '선배형': "수고했어. 5분 쉬고 다시 하자."
+  },
+  rest: {
+    '츤데레': "...5분이야. 딱 5분.",
+    '단데레': "...잠깐 쉬어. 옆에 있을게.",
+    '얀데레': "5분 동안 나만 봐!",
+    '쿨데레': "5분 휴식. 재충전해.",
+    '혈기왕성': "5분 쉬자! 간식 먹어도 돼!",
+    '선배형': "잠깐 쉬어. 곧 다시 시작하자."
+  }
+};
+
+function nowDateStart() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function daysUntil(deadlineStr) {
+  if (!deadlineStr) return 9999;
+  const d = new Date(deadlineStr + 'T00:00:00');
+  return Math.round((d.getTime() - nowDateStart().getTime()) / 86400000);
+}
+function ddayText(days) { return (days <= 0) ? 'D-day' : ('D-' + days); }
+function ddayColor(days) {
+  if (days <= 3) return 'rgba(255,80,80,0.25)';
+  if (days <= 7) return 'rgba(255,160,50,0.25)';
+  return 'rgba(255,122,178,0.15)';
+}
+function tasksForCourse(courseIdx) { return (S.tasks || []).filter(t => t && t.courseIdx === courseIdx); }
+function nextPendingTask(courseIdx) {
+  const list = tasksForCourse(courseIdx).filter(t => !t.done);
+  if (!list.length) return null;
+  list.sort((a,b)=> (daysUntil(a.deadline) - daysUntil(b.deadline)) || (a.createdAt - b.createdAt));
+  return list[0];
+}
+function autoKeyForDays(days) {
+  if (days <= 0) return 'd0';
+  if (days === 1) return 'd1';
+  if (days <= 3) return 'le3';
+  if (days <= 7) return 'le7';
+  return 'gt7';
+}
+function personaOfCourse(i) {
+  const c = S.courses[i] || {};
+  const raw = (c.persona || '').trim();
+  if (!raw) return '츤데레';
+  // normalize to known keys
+  for (let k in PERSONA_LINES.noTask) {
+    if (raw === k) return k;
+  }
+  return '츤데레';
+}
+
+let _flow = { active:false, step:0, name:'', deadline:'', detail:'' };
+function hideForm() {
+  const f = document.getElementById('dlg-form');
+  if (!f) return;
+  f.style.display = 'none';
+  f.innerHTML = '';
+  f.style.flexDirection = 'column';
+}
+
+function showAutoLineForCourse(i) {
+  if (_flow.active) return;
+  const persona = personaOfCourse(i);
+  const t = nextPendingTask(i);
+  let line;
+  if (!t) line = (PERSONA_LINES.noTask[persona] || PERSONA_LINES.noTask['츤데레']);
+  else {
+    const d = daysUntil(t.deadline);
+    const key = autoKeyForDays(d);
+    line = t.name + ', ' + (PERSONA_LINES[key][persona] || PERSONA_LINES[key]['츤데레']);
+  }
   save();
-  typeText(t);
+  hideForm();
+  typeText(line);
+}
+
+function startTaskRegister() {
+  _flow = { active:true, step:1, name:'', deadline:'', detail:'' };
+  const persona = personaOfCourse(S.curIdx);
+  typeText(REG_LINES.step1[persona] || REG_LINES.step1['츤데레']);
+  renderRegisterStep1();
+}
+
+function renderRegisterStep1() {
+  const f = document.getElementById('dlg-form');
+  if (!f) return;
+  f.style.display = 'flex';
+  f.style.flexDirection = 'column';
+  f.innerHTML =
+    '<input id="reg-name" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;" placeholder="과제명을 입력하세요">' +
+    '<div style="display:flex;gap:8px;">' +
+    '  <button id="reg-cancel" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);font-weight:800;cursor:pointer;">취소</button>' +
+    '  <button id="reg-next1" style="flex:2;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),#d9549a);color:#fff;font-weight:800;cursor:pointer;">다음</button>' +
+    '</div>';
+  const nameEl = document.getElementById('reg-name');
+  if (nameEl) nameEl.value = _flow.name || '';
+  document.getElementById('reg-cancel').onclick = function () {
+    _flow.active = false;
+    hideForm();
+    showAutoLineForCourse(S.curIdx);
+  };
+  document.getElementById('reg-next1').onclick = function () {
+    const v = (document.getElementById('reg-name').value || '').trim();
+    if (!v) { showGuide('과제명을 입력해줘!', 2200); return; }
+    _flow.name = v;
+    _flow.step = 2;
+    const persona = personaOfCourse(S.curIdx);
+    typeText(REG_LINES.step2[persona] || REG_LINES.step2['츤데레']);
+    renderRegisterStep2();
+  };
+}
+
+function renderRegisterStep2() {
+  const f = document.getElementById('dlg-form');
+  if (!f) return;
+  f.style.display = 'flex';
+  f.style.flexDirection = 'column';
+  f.innerHTML =
+    '<input id="reg-deadline" type="date" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;">' +
+    '<div style="display:flex;gap:8px;">' +
+    '  <button id="reg-prev2" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);font-weight:800;cursor:pointer;">← 이전</button>' +
+    '  <button id="reg-next2" style="flex:2;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),#d9549a);color:#fff;font-weight:800;cursor:pointer;">다음</button>' +
+    '</div>';
+  const dl = document.getElementById('reg-deadline');
+  if (dl) {
+    const today = new Date();
+    dl.min = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    dl.value = _flow.deadline || '';
+  }
+  document.getElementById('reg-prev2').onclick = function () {
+    _flow.step = 1;
+    const persona = personaOfCourse(S.curIdx);
+    typeText(REG_LINES.step1[persona] || REG_LINES.step1['츤데레']);
+    renderRegisterStep1();
+  };
+  document.getElementById('reg-next2').onclick = function () {
+    const v = (document.getElementById('reg-deadline').value || '').trim();
+    if (!v) { showGuide('마감일을 선택해줘!', 2200); return; }
+    _flow.deadline = v;
+    _flow.step = 3;
+    const persona = personaOfCourse(S.curIdx);
+    typeText(REG_LINES.step3[persona] || REG_LINES.step3['츤데레']);
+    renderRegisterStep3();
+  };
+}
+
+function renderRegisterStep3() {
+  const f = document.getElementById('dlg-form');
+  if (!f) return;
+  f.style.display = 'flex';
+  f.style.flexDirection = 'column';
+  f.innerHTML =
+    '<textarea id="reg-detail" rows="3" style="width:100%;resize:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;" placeholder="없으면 건너뛰어도 돼"></textarea>' +
+    '<div style="display:flex;gap:8px;">' +
+    '  <button id="reg-prev3" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);font-weight:800;cursor:pointer;">← 이전</button>' +
+    '  <button id="reg-done" style="flex:2;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),#d9549a);color:#fff;font-weight:800;cursor:pointer;">등록</button>' +
+    '</div>';
+  const dt = document.getElementById('reg-detail');
+  if (dt) dt.value = _flow.detail || '';
+  document.getElementById('reg-prev3').onclick = function () {
+    _flow.step = 2;
+    const persona = personaOfCourse(S.curIdx);
+    typeText(REG_LINES.step2[persona] || REG_LINES.step2['츤데레']);
+    renderRegisterStep2();
+  };
+  document.getElementById('reg-done').onclick = function () {
+    const v = (document.getElementById('reg-detail').value || '').trim();
+    _flow.detail = v;
+    hideForm();
+    const ts = Date.now();
+    S.tasks.push({ id: ts, courseIdx: S.curIdx, name: _flow.name, deadline: _flow.deadline, detail: _flow.detail, done:false, createdAt: ts });
+    save();
+    renderTaskDrawer();
+    const persona = personaOfCourse(S.curIdx);
+    typeText(REG_LINES.done[persona] || REG_LINES.done['츤데레']);
+    _flow.active = false;
+    setTimeout(function () { showAutoLineForCourse(S.curIdx); }, 2000);
+  };
+}
+
+// Tasks drawer override (filter tabs + per-course)
+let _drawerCourseIdx = null;
+let _taskView = 'all';
+function openTasks() { _drawerCourseIdx = S.curIdx; renderTaskDrawer(); document.getElementById('tasks-drawer').classList.add('show'); }
+
+function renderTaskDrawer() {
+  const list = document.getElementById('tasks-list');
+  if (!list) return;
+  list.innerHTML = '';
+  const courseIdx = (_drawerCourseIdx === null || _drawerCourseIdx === undefined) ? S.curIdx : _drawerCourseIdx;
+
+  const selWrap = document.createElement('div');
+  selWrap.style.display = 'flex';
+  selWrap.style.gap = '8px';
+  selWrap.style.alignItems = 'center';
+  selWrap.style.marginBottom = '10px';
+  selWrap.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,.6);flex-shrink:0;">과목</div>';
+  const sel = document.createElement('select');
+  sel.style.flex = '1';
+  sel.style.background = 'rgba(255,255,255,.06)';
+  sel.style.border = '1px solid rgba(255,122,178,.18)';
+  sel.style.borderRadius = '12px';
+  sel.style.color = 'rgba(255,255,255,.9)';
+  sel.style.padding = '8px 10px';
+  sel.style.fontSize = '12px';
+  S.courses.forEach((c,i) => {
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = (c && c.name) ? c.name : ('과목' + (i+1));
+    if (i === courseIdx) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.onchange = function () {
+    const idx = parseInt(sel.value, 10);
+    _drawerCourseIdx = idx;
+    selectCourse(idx);
+    renderTaskDrawer();
+  };
+  selWrap.appendChild(sel);
+  list.appendChild(selWrap);
+
+  const tab = document.createElement('div');
+  tab.style.display = 'flex';
+  tab.style.gap = '6px';
+  tab.style.marginBottom = '10px';
+  function mkTab(key, label) {
+    const b = document.createElement('button');
+    b.className = 'btn-task-done';
+    b.style.flex = '1';
+    b.style.padding = '8px 10px';
+    b.style.background = (key === _taskView) ? 'rgba(255,122,178,.18)' : 'rgba(255,255,255,.06)';
+    b.style.borderColor = (key === _taskView) ? 'rgba(255,122,178,.35)' : 'rgba(255,255,255,.14)';
+    b.style.color = (key === _taskView) ? 'var(--pink)' : 'rgba(255,255,255,.82)';
+    b.textContent = label;
+    b.onclick = function () { _taskView = key; renderTaskDrawer(); };
+    return b;
+  }
+  tab.appendChild(mkTab('all', '전체'));
+  tab.appendChild(mkTab('pending', '진행 중'));
+  tab.appendChild(mkTab('done', '완료'));
+  list.appendChild(tab);
+
+  const tasks = tasksForCourse(courseIdx);
+  if (!tasks.length) {
+    const empty = document.createElement('div');
+    empty.className = 'task-item';
+    empty.innerHTML = `<div class="task-course">진행 중인 과제가 없어요</div><div class="task-text">[📝 과제 등록]으로 새 과제를 등록해보세요.</div>`;
+    list.appendChild(empty);
+    return;
+  }
+
+  const pending = tasks.filter(t => !t.done).sort((a,b)=> (daysUntil(a.deadline)-daysUntil(b.deadline)) || (a.createdAt-b.createdAt));
+  const done = tasks.filter(t => t.done).sort((a,b)=> (b.createdAt-a.createdAt));
+  let all = pending.concat(done);
+  if (_taskView === 'pending') all = pending;
+  if (_taskView === 'done') all = done;
+
+  all.forEach((t) => {
+    const item = document.createElement('div');
+    item.className = 'task-item';
+    if (t.done) item.style.opacity = '.6';
+    const d = daysUntil(t.deadline);
+    const badgeBg = ddayColor(d);
+    const badge = `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:${badgeBg};border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:900;">${ddayText(d)}</span>`;
+    const detail = t.detail ? `<div class="task-text" style="margin-top:6px;opacity:.92;">${esc(t.detail)}</div>` : '';
+    item.innerHTML = `
+      <div class="task-top">
+        <div class="task-course"><span style="font-weight:900;">${esc(t.name)}</span>${badge}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn-task-done" style="${t.done ? 'opacity:.6;' : ''}" onclick="markTaskDone(${t.id})">✓ 완료 +10</button>
+          <button class="btn-task-edit" onclick="openEditTask(${t.id})">수정</button>
+          <button class="btn-task-done" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:rgba(255,255,255,.82);" onclick="deleteTask(${t.id})">삭제</button>
+        </div>
+      </div>
+      <div class="task-text">마감일: ${esc(t.deadline || '')}</div>
+      ${detail}
+    `;
+    list.appendChild(item);
+  });
+}
+
+let _editTaskId = null;
+function openEditTask(id) {
+  const t = (S.tasks || []).find(x => x && x.id === id);
+  if (!t) return;
+  _editTaskId = id;
+  const ov = document.getElementById('edit-overlay');
+  if (!ov) return;
+  document.getElementById('edit-name').value = t.name || '';
+  document.getElementById('edit-deadline').value = t.deadline || '';
+  document.getElementById('edit-detail').value = t.detail || '';
+  // min=today
+  const dl = document.getElementById('edit-deadline');
+  const today = new Date();
+  dl.min = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  ov.classList.add('show');
+}
+
+function closeEditTask(byBackdrop) {
+  const ov = document.getElementById('edit-overlay');
+  if (!ov) return;
+  ov.classList.remove('show');
+  _editTaskId = null;
+}
+
+function saveEditTask() {
+  if (_editTaskId === null) return;
+  const t = (S.tasks || []).find(x => x && x.id === _editTaskId);
+  if (!t) { closeEditTask(false); return; }
+  const name = (document.getElementById('edit-name').value || '').trim();
+  const deadline = (document.getElementById('edit-deadline').value || '').trim();
+  const detail = (document.getElementById('edit-detail').value || '').trim();
+  if (!name) { showGuide('과제명을 입력해줘!', 2200); return; }
+  if (!deadline) { showGuide('마감일을 선택해줘!', 2200); return; }
+  t.name = name;
+  t.deadline = deadline;
+  t.detail = detail;
+  save();
+  closeEditTask(false);
+  renderTaskDrawer();
+  // If calendar is open, refresh it.
+  const cal = document.getElementById('cal-overlay');
+  if (cal && cal.classList.contains('show')) renderCalendar();
+  // If current course affected, refresh auto line.
+  if (t.courseIdx === S.curIdx && !_flow.active) setTimeout(function(){ showAutoLineForCourse(S.curIdx); }, 0);
+}
+
+function markTaskDone(id) {
+  const t = (S.tasks || []).find(x => x && x.id === id);
+  if (!t) return;
+  if (!t.done) {
+    t.done = true;
+    const c = S.courses[t.courseIdx];
+    if (c) {
+      c.affection = Math.max(0, Math.min(100, (c.affection||0) + 10));
+      save();
+      if (t.courseIdx === S.curIdx) updateAffUI(c.affection);
+      flashNotif('+10 호감도 상승!');
+      if (t.courseIdx === S.curIdx && !_flow.active) setTimeout(function(){ showAutoLineForCourse(S.curIdx); }, 0);
+    } else save();
+  } else save();
   renderTaskDrawer();
 }
 
-/* ───────────── SEND MESSAGE ───────────── */
-let isLoading = false;
-async function sendMsg() {
-  if (isLoading) return;
-  const inp = document.getElementById('dlg-input');
-  const msg = inp.value.trim();
-  if (!msg) return;
-  if (!canCallGeminiOrGuide()) return;
-  inp.value = '';
-  const c = S.courses[S.curIdx];
-  const stage = getStage(c.affection);
-  let sys;
-  if (S.mode === 'task') {
-    sys = `당신은 ${c.name} 과목이 ${c.gender} 미연시 캐릭터로 의인화된 존재입니다. 성격은 ${c.persona}이고 호감도 ${c.affection}/100, 단계는 ${stage.name}입니다. 이 단계에 맞는 감정으로 과제/공지를 2-3문장 반말로 전달하세요.`;
+function deleteTask(id) {
+  const idx = (S.tasks || []).findIndex(x => x && x.id === id);
+  if (idx < 0) return;
+  const removed = S.tasks[idx];
+  S.tasks.splice(idx, 1);
+  save();
+  renderTaskDrawer();
+  if (removed && removed.courseIdx === S.curIdx && !_flow.active) setTimeout(function(){ showAutoLineForCourse(S.curIdx); }, 0);
+}
+
+// Calendar positioning + rendering
+let _cal = { y:0, m:0, selected:'' };
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function positionCalBtn() {
+  const btn = document.querySelector('.btn-cal');
+  const panel = document.querySelector('.aff-panel');
+  if (!btn || !panel) return;
+  const r = panel.getBoundingClientRect();
+  btn.style.top = Math.round(r.bottom + 8) + 'px';
+}
+function openCalendar(){ const ov=document.getElementById('cal-overlay'); if(!ov) return; const now=new Date(); if(!_cal.y){_cal.y=now.getFullYear();_cal.m=now.getMonth();} if(!_cal.selected) _cal.selected=ymd(now); positionCalBtn(); ov.classList.add('show'); renderCalendar(); }
+function closeCalendar(){ const ov=document.getElementById('cal-overlay'); if(!ov) return; ov.classList.remove('show'); }
+function calMove(delta){ const d=new Date(_cal.y,_cal.m+delta,1); _cal.y=d.getFullYear(); _cal.m=d.getMonth(); renderCalendar(); }
+function tasksByDayMap(){ const map={}; (S.tasks||[]).forEach(t=>{ if(!t||!t.deadline) return; (map[t.deadline] ||= []).push(t); }); return map; }
+function renderCalendar(){
+  const monthEl=document.getElementById('cal-month'); const grid=document.getElementById('cal-grid'); const list=document.getElementById('cal-list');
+  if(!monthEl||!grid||!list) return;
+  const first=new Date(_cal.y,_cal.m,1); const last=new Date(_cal.y,_cal.m+1,0);
+  monthEl.textContent=_cal.y+'.'+String(_cal.m+1).padStart(2,'0');
+  const dowNames=['일','월','화','수','목','금','토'];
+  grid.innerHTML=''; dowNames.forEach(n=>{ const el=document.createElement('div'); el.className='cal-dow'; el.textContent=n; grid.appendChild(el); });
+  const startDow=first.getDay(); const daysInMonth=last.getDate(); const totalCells=42; const map=tasksByDayMap(); const todayKey=ymd(new Date());
+  for(let i=0;i<totalCells;i++){
+    const dayNum=i-startDow+1; const cell=document.createElement('div'); cell.className='cal-day';
+    if(dayNum<1||dayNum>daysInMonth){ cell.classList.add('muted'); grid.appendChild(cell); continue; }
+    const dateKey=_cal.y+'-'+String(_cal.m+1).padStart(2,'0')+'-'+String(dayNum).padStart(2,'0');
+    cell.textContent=String(dayNum);
+    if(dateKey===todayKey) cell.classList.add('today');
+    if(dateKey===_cal.selected) cell.classList.add('selected');
+    const dotsWrap=document.createElement('div'); dotsWrap.className='cal-dots';
+    const tasks=map[dateKey]||[]; const byCourse={};
+    tasks.forEach(t=>{ const idx=(t.courseIdx||0); if(!byCourse[idx]) byCourse[idx]={done:true}; if(!t.done) byCourse[idx].done=false; });
+    Object.keys(byCourse).slice(0,8).forEach(k=>{ const idx=parseInt(k,10); const dot=document.createElement('div'); dot.className='cal-dot'+(byCourse[k].done?' done':''); dot.style.background=COURSE_COLORS[idx]||COURSE_COLORS[COURSE_COLORS.length-1]; dotsWrap.appendChild(dot); });
+    cell.appendChild(dotsWrap);
+    cell.onclick=function(){ _cal.selected=dateKey; renderCalendar(); };
+    grid.appendChild(cell);
+  }
+  const selTasks=(map[_cal.selected]||[]).slice().sort((a,b)=>(a.courseIdx-b.courseIdx)||(a.createdAt-b.createdAt));
+  if(!selTasks.length){ list.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.6);padding:4px 2px;">선택한 날짜에 마감 과제가 없어요.</div>'; return; }
+  list.innerHTML='';
+  selTasks.forEach(t=>{
+    const row=document.createElement('div'); row.className='cal-item'+(t.done?' done':'');
+    const course = (S.courses && S.courses[t.courseIdx]) ? (S.courses[t.courseIdx].name || ('과목'+(t.courseIdx+1))) : ('과목'+(t.courseIdx+1));
+    const pill=document.createElement('div'); pill.className='cal-pill'; pill.textContent=course;
+    const dot=document.createElement('span'); dot.style.display='inline-block'; dot.style.width='8px'; dot.style.height='8px'; dot.style.borderRadius='999px'; dot.style.background=COURSE_COLORS[t.courseIdx]||COURSE_COLORS[COURSE_COLORS.length-1]; dot.style.marginRight='8px'; dot.style.opacity=t.done?'.35':'.95';
+    const text=document.createElement('div'); text.style.flex='1'; text.innerHTML='<span style="font-weight:900;">'+esc(t.name)+'</span> <span style="opacity:.65;">('+(t.done?'완료':'미완료')+')</span>';
+    const left=document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.appendChild(dot); left.appendChild(pill);
+    row.appendChild(left); row.appendChild(text); list.appendChild(row);
+  });
+}
+
+// Study date (Pomodoro)
+let _study = { running:false, phase:'focus', remain:1500, timer:null, doneCount:0 };
+function studyPersonaLine(key){ const p=personaOfCourse(S.curIdx); return (STUDY_LINES[key][p]||STUDY_LINES[key]['츤데레']); }
+function openStudyDate(){ ensureStudyScreen(); show('study'); const c=S.courses[S.curIdx]||{}; const nm=c.name?c.name:('과목'+(S.curIdx+1)); const title=document.getElementById('study-name'); if(title) title.textContent=nm; updateStudyChar(); studySetPhase('focus',1500,false); renderStudyUI(studyPersonaLine('focus')); }
+function ensureStudyScreen(){
+  if(document.getElementById('screen-study')) return;
+  const app=document.getElementById('app'); const div=document.createElement('div');
+  div.id='screen-study'; div.className='screen';
+  div.innerHTML = `
+    <div class="scene">
+      <div class="scene-bg" style="background:url('./images/study_bg.png') center top / cover no-repeat;"></div>
+      <div class="scene-overlay"></div>
+    </div>
+    <div class="char-holder">
+      <img id="study-char-img" class="char-img" alt="캐릭터">
+      <div id="study-char-fallback" class="char-fallback">이미지 준비중</div>
+    </div>
+    <div class="dialog">
+      <div class="dlg-top-row">
+        <div class="dlg-name" id="study-name">과목명</div>
+        <button class="btn-tasks" onclick="show('game')">돌아가기</button>
+      </div>
+      <div class="dlg-text" id="study-text"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;">
+        <div id="study-ring" style="width:54px;height:54px;border-radius:999px;background:conic-gradient(var(--pink) 0deg, rgba(255,255,255,.10) 0deg);border:1px solid rgba(255,122,178,.22);display:flex;align-items:center;justify-content:center;">
+          <div style="width:44px;height:44px;border-radius:999px;background:rgba(10,6,20,.92);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.88);font-size:10px;font-weight:900;">⏰</div>
+        </div>
+        <div style="flex:1;">
+          <div id="study-time" style="font-size:22px;font-weight:900;color:rgba(255,255,255,.92);letter-spacing:.04em;">25:00</div>
+          <div id="study-count" style="font-size:11px;color:rgba(255,255,255,.62);margin-top:2px;">집중 0회 완료 ♡ +0</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="study-btn study-btn-start" id="study-start" onclick="studyToggle()">시작</button>
+          <button class="study-btn study-btn-reset" onclick="studyReset()">리셋</button>
+        </div>
+      </div>
+    </div>
+  `;
+  app.appendChild(div);
+}
+function updateStudyChar(){
+  const c=S.courses[S.curIdx]||{}; const gender=normalizeFilePart(c.gender); const persona=normalizeFilePart(c.persona);
+  const studySrc='./images/characters/'+gender+'_'+persona+'_study.png';
+  const normalSrc='./images/characters/'+gender+'_'+persona+'.png';
+  const studyCandidates = [studySrc, studySrc.normalize('NFD')];
+  const normalCandidates = [normalSrc, normalSrc.normalize('NFD')];
+  const img=document.getElementById('study-char-img'); const fb=document.getElementById('study-char-fallback');
+  if(!img||!fb) return;
+  fb.style.display='none'; img.style.display='block';
+  let triedStudy = 0;
+  let triedNormal = 0;
+  img.onerror=function(){
+    if (triedStudy < studyCandidates.length - 1) {
+      triedStudy += 1;
+      img.src = studyCandidates[triedStudy];
+      return;
+    }
+    if (triedNormal < normalCandidates.length) {
+      img.src = normalCandidates[triedNormal];
+      triedNormal += 1;
+      return;
+    }
+    img.style.display='none'; fb.style.display='flex'; fb.textContent='이미지 준비중'; img.onerror=null;
+  };
+  img.src=studyCandidates[0];
+}
+function fmtTime(sec){ sec=Math.max(0,sec|0); return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0'); }
+function renderStudyUI(line){
+  document.getElementById('study-text').textContent=line||'';
+  document.getElementById('study-time').textContent=fmtTime(_study.remain);
+  document.getElementById('study-count').textContent='집중 '+_study.doneCount+'회 완료 ♡ +'+(_study.doneCount*5);
+  const total=(_study.phase==='focus')?1500:300;
+  const p=1-(_study.remain/total); const deg=Math.max(0,Math.min(1,p))*360;
+  document.getElementById('study-ring').style.background='conic-gradient(var(--pink) '+deg+'deg, rgba(255,255,255,.10) 0deg)';
+}
+function studySetPhase(phase, seconds){ _study.phase=phase; _study.remain=seconds; renderStudyUI(phase==='focus'?studyPersonaLine('focus'):studyPersonaLine('rest')); }
+function studyTick(){
+  if(!_study.running) return;
+  _study.remain -= 1;
+  if(_study.remain<=0){
+    if(_study.phase==='focus'){
+      _study.doneCount += 1;
+      const c=S.courses[S.curIdx];
+      if(c){ c.affection=Math.max(0,Math.min(100,(c.affection||0)+5)); save(); updateAffUI(c.affection); flashNotif('+5 호감도 상승!'); }
+      renderStudyUI(studyPersonaLine('focusDone'));
+      studySetPhase('break', 300);
+    } else {
+      studySetPhase('focus', 1500);
+    }
   } else {
-    sys = `당신은 ${c.name} 과목이 ${c.gender} 미연시 캐릭터입니다. 성격은 ${c.persona}, 호감도 ${c.affection}/100입니다. 학생 질문에 ${c.name} 지식으로 답하되 캐릭터 말투(반말)를 유지하세요.`;
-    changeAff(3);
-  }
-  showLoading();
-  isLoading = true;
-  try {
-    const t = await gemini(sys, msg);
-    c.lastText = t;
-    save();
-    typeText(t);
-  } finally {
-    isLoading = false;
+    renderStudyUI(document.getElementById('study-text').textContent);
   }
 }
-
-/* ───────────── GEMINI API ───────────── */
-let _geminiInFlight = false;
-let _geminiNextAllowedAt = 0;
-
-function _parseRetrySeconds(msg) {
-  const m = String(msg || '').match(/retry in\s+([0-9.]+)s/i);
-  if (!m) return 0;
-  const sec = parseFloat(m[1]);
-  return isFinite(sec) ? sec : 0;
-}
-
-function _geminiBlockedMessage() {
-  const waitMs = Math.max(0, _geminiNextAllowedAt - Date.now());
-  const waitS = Math.ceil(waitMs / 1000);
-  if (waitS > 0) return `요즘 좀 바빠… ${waitS}초만 기다렸다가 다시 말해줘.`;
-  return '잠깐만… 지금 대답 준비 중이야. 조금만 기다려줘!';
-}
-
-function canCallGeminiOrGuide() {
-  if (_geminiInFlight) { showGuide(_geminiBlockedMessage(), 1800); return false; }
-  if (Date.now() < _geminiNextAllowedAt) { showGuide(_geminiBlockedMessage(), 2600); return false; }
-  return true;
-}
-
-function setSendDisabled(disabled) {
-  const btn = document.getElementById('btn-send');
-  if (btn) btn.disabled = !!disabled;
-}
-
-async function gemini(systemPrompt, userMsg) {
-  const FALLBACK = '...잠깐, 연결이 끊긴 것 같아. 다시 말해줘.';
-  try {
-    _geminiInFlight = true;
-    setSendDisabled(true);
-    console.log('[dkdk] Gemini call start', { mode: S && S.mode, courseIdx: S && S.curIdx });
-    const res = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ parts: [{ text: userMsg }] }]
-      })
-    });
-    let d = null;
-    try { d = await res.json(); }
-    catch (e) {
-      console.error('[dkdk] Gemini non-JSON response', { status: res && res.status, statusText: res && res.statusText }, e);
-      return FALLBACK;
-    }
-
-    console.log('[dkdk] Gemini response meta', { ok: res && res.ok, status: res && res.status, statusText: res && res.statusText });
-    if (!res || !res.ok) {
-      console.error('[dkdk] Gemini HTTP error', d);
-      // Quota / rate limit handling (429)
-      if (res && res.status === 429 && d && d.error) {
-        const retrySec = _parseRetrySeconds(d.error.message);
-        const waitMs = Math.max(8000, Math.ceil(retrySec * 1000));
-        _geminiNextAllowedAt = Date.now() + waitMs;
-        console.log('[dkdk] Gemini rate-limited. nextAllowedAt=', new Date(_geminiNextAllowedAt).toISOString());
-        showGuide(`지금은 요청이 너무 많아 잠깐 쉬는 중이야. ${Math.ceil(waitMs/1000)}초 뒤에 다시 시도해줘!`, 5200);
-      }
-      return FALLBACK;
-    }
-    if (d && d.error) {
-      console.error('[dkdk] Gemini API error', d.error);
-      return FALLBACK;
-    }
-    if (!d || !d.candidates || !d.candidates.length) return FALLBACK;
-    if (!d.candidates[0] || !d.candidates[0].content || !d.candidates[0].content.parts || !d.candidates[0].content.parts.length) return FALLBACK;
-    const txt = d.candidates[0].content.parts[0].text;
-    return (txt && String(txt).trim()) ? String(txt).trim() : FALLBACK;
-  } catch(e) {
-    console.error('[dkdk] Gemini call failed', e);
-    return FALLBACK;
-  } finally {
-    _geminiInFlight = false;
-    setSendDisabled(false);
+function studyToggle(){
+  _study.running=!_study.running;
+  const btn=document.getElementById('study-start');
+  if(btn) {
+    btn.textContent = _study.running ? '일시정지' : '시작';
+    btn.classList.toggle('study-btn-pause', _study.running);
+    btn.classList.toggle('study-btn-start', !_study.running);
   }
+  if(_study.running){ if(_study.timer) clearInterval(_study.timer); _study.timer=setInterval(studyTick,1000); }
+  else { if(_study.timer) clearInterval(_study.timer); _study.timer=null; }
+}
+function studyReset(){
+  _study.running=false;
+  if(_study.timer) clearInterval(_study.timer);
+  _study.timer=null;
+  _study.phase='focus'; _study.remain=1500;
+  const btn=document.getElementById('study-start');
+  if(btn) {
+    btn.textContent='시작';
+    btn.classList.remove('study-btn-pause');
+    btn.classList.add('study-btn-start');
+  }
+  renderStudyUI(studyPersonaLine('focus'));
 }
 
 /* ───────────── TYPING (한 글자씩 순차) ───────────── */
 let _tid = null;
-
-function showLoading() {
-  if (_tid) { clearTimeout(_tid); _tid = null; }
-  document.getElementById('dlg-text').innerHTML = '<span class="dots"></span>';
-}
 
 function typeText(text) {
   if (_tid) { clearTimeout(_tid); _tid = null; }
@@ -1441,6 +2139,8 @@ function boot() {
     if (S.school) document.getElementById('inp-school').value = S.school;
     if (S.major)  document.getElementById('inp-major').value  = S.major;
   }
+  setTimeout(positionCalBtn, 0);
+  window.addEventListener('resize', function () { positionCalBtn(); });
 }
 
 boot();
