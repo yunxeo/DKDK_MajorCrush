@@ -1144,19 +1144,19 @@
       <button class="btn-cal" title="캘린더" onclick="openCalendar()">📅</button>
       <button class="btn-info" title="사용 방법" onclick="openGuide()">i</button>
     </div>
-    <div class="char-holder">
+    <div class="char-holder" onclick="handleSceneTap()">
       <img id="char-img" class="char-img" alt="캐릭터">
       <div id="char-fallback" class="char-fallback">이미지 준비중</div>
     </div>
-    <div class="dialog">
-      <div class="dlg-top-row">
+    <div class="dialog" onclick="handleSceneTap()">
+      <div class="dlg-top-row" onclick="event.stopPropagation()">
         <div class="dlg-name" id="dlg-name">과목명</div>
         <button class="btn-tasks" onclick="openTasks()">내 과제함</button>
       </div>
-      <div id="dlg-form"></div>
+      <div id="dlg-form" onclick="event.stopPropagation()"></div>
       <div class="dlg-text" id="dlg-text"></div>
       <div class="guide" id="guide"></div>
-      <div class="mode-row">
+      <div class="mode-row" onclick="event.stopPropagation()">
         <button class="btn-mode active" id="btn-task" onclick="startTaskRegister()">📝 과제 등록</button>
         <button class="btn-mode"        id="btn-qna"  onclick="openStudyDate()">⏰ 공부 데이트</button>
       </div>
@@ -1384,7 +1384,45 @@ function finishReg() {
 }
 
 /* ───────────── SCREEN 3 ───────────── */
-function initGame() { initCourseUI(); selectCourse(S.curIdx < S.courses.length ? S.curIdx : 0); showGuideIfNeeded(); }
+let _tapCount = 0;
+
+function initGame() {
+  _tapCount = 0;
+  initCourseUI();
+  selectCourse(S.curIdx < S.courses.length ? S.curIdx : 0);
+  showGuideIfNeeded();
+}
+
+function handleSceneTap() {
+  if (_flow && _flow.active) return;
+  const persona = personaOfCourse(S.curIdx);
+
+  if (_tapCount === 0) {
+    const greetLines = {
+      '츤데레': `...어, ${S.nick}. 왔어. 과제 있으면 말해. 아니면 같이 공부하든가.`,
+      '단데레': `...안녕, ${S.nick}. 과제 있으면 같이 정리하자. 아니면 공부 데이트도 괜찮아.`,
+      '얀데레': `${S.nick} 왔어! 기다렸어! 과제 알려줘! 아니면 지금 바로 공부 데이트하자!`,
+      '쿨데레': `${S.nick}. 왔군. 과제 등록하거나 공부 데이트 중 선택해.`,
+      '혈기왕성': `${S.nick}! 왔어! 과제 있어? 없으면 지금 바로 공부 데이트 하자!`,
+      '선배형': `왔어, ${S.nick}. 과제 있으면 얘기해. 집중하고 싶으면 같이 공부하자.`
+    };
+    typeText(greetLines[persona] || greetLines['츤데레']);
+    _tapCount++;
+  } else if (_tapCount === 1) {
+    const majorLines = {
+      '츤데레': `${S.major}생치고는... 뭐, 나쁘지 않네.`,
+      '단데레': `...${S.major} 공부 힘들지? 괜찮아.`,
+      '얀데레': `${S.major}에서 제일 열심히 해줄 거지?`,
+      '쿨데레': `${S.major} 커리큘럼 분석 완료.`,
+      '혈기왕성': `${S.major} 최고 될 수 있어! 파이팅!`,
+      '선배형': `${S.major}라면 이 정도는 할 수 있어.`
+    };
+    typeText(majorLines[persona] || majorLines['츤데레']);
+    _tapCount++;
+  } else {
+    showAutoLineForCourse(S.curIdx);
+  }
+}
 
 function showGuideIfNeeded() {
   if (localStorage.getItem('dkdk_guide_shown')) return;
@@ -1600,6 +1638,14 @@ function flashNotif(msg) {
 const COURSE_COLORS = ['#FF7AB2', '#7ACFFF', '#a78bfa', '#34d399', '#fbbf24', '#e879f9'];
 
 const PERSONA_LINES = {
+  greet: {
+    '츤데레': "...어, 왔어. 과제 있으면 말해. 아니면 같이 공부하든가.",
+    '단데레': "...안녕. 과제 있으면 같이 정리하자. 아니면 공부 데이트도 괜찮아.",
+    '얀데레': "왔어! 기다렸어! 과제 알려줘! 아니면 지금 바로 공부 데이트하자!",
+    '쿨데레': "왔군. 과제 등록하거나 공부 데이트 중 선택해.",
+    '혈기왕성': "안녕! 왔어! 과제 있어? 없으면 지금 바로 공부 데이트 하자!",
+    '선배형': "왔어. 과제 있으면 얘기해. 집중하고 싶으면 같이 공부하자."
+  },
   noTask: {
     '츤데레': "...지금은 과제 없어. 뭐, 다행이지.",
     '단데레': "...지금은 쉬어도 돼.",
