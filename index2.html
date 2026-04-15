@@ -501,7 +501,6 @@
       height: 100%;
       bottom: 0;
       z-index: 9; /* dialog(10)보다 아래라 하단이 자연스럽게 가려짐 */
-      pointer-events: none;
     }
     .char-img {
       width: 100%;
@@ -509,6 +508,7 @@
       object-fit: cover;
       object-position: center top;
       display: block;
+      pointer-events: none;
     }
     .char-fallback {
       position: absolute;
@@ -720,7 +720,6 @@
       height: 100%;
       bottom: 0;
       z-index: 9;
-      pointer-events: none;
     }
     .char-img {
       width: 100%;
@@ -728,6 +727,7 @@
       object-fit: cover;
       object-position: center top;
       display: block;
+      pointer-events: none;
     }
 
     /* ───────────── TASK REGISTER INLINE FORM (index2) ───────────── */
@@ -2249,7 +2249,7 @@ function fmtTime(sec){ sec=Math.max(0,sec|0); return String(Math.floor(sec/60)).
 function renderStudyUI(line){
   document.getElementById('study-text').textContent=line||'';
   document.getElementById('study-time').textContent=fmtTime(_study.remain);
-  document.getElementById('study-count').textContent='집중 '+_study.doneCount+'회 완료 ♡ +'+(_study.doneCount*5);
+  document.getElementById('study-count').textContent='집중 '+_study.doneCount+'회 완료 ♡ +'+(_study.doneCount*20);
   const total=(_study.phase==='focus')?1500:300;
   const p=1-(_study.remain/total); const deg=Math.max(0,Math.min(1,p))*360;
   document.getElementById('study-ring').style.background='conic-gradient(var(--pink) '+deg+'deg, rgba(255,255,255,.10) 0deg)';
@@ -2262,7 +2262,7 @@ function studyTick(){
     if(_study.phase==='focus'){
       _study.doneCount += 1;
       const c=S.courses[S.curIdx];
-      if(c){ c.affection=Math.max(0,Math.min(100,(c.affection||0)+5)); save(); updateAffUI(c.affection); flashNotif('+5 호감도 상승!'); }
+      if(c){ c.affection=Math.max(0,Math.min(100,(c.affection||0)+20)); save(); updateAffUI(c.affection); flashNotif('+20 호감도 상승!'); }
       renderStudyUI(studyPersonaLine('focusDone'));
       studySetPhase('break', 300);
     } else {
