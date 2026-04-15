@@ -1354,11 +1354,13 @@ const STAGE_LINES = {
 };
 
 function getStageLineForPersona(affection, persona) {
-  if (affection >= 80) return STAGE_LINES.s80[persona] || STAGE_LINES.s80['츤데레'];
-  if (affection >= 60) return STAGE_LINES.s60[persona] || STAGE_LINES.s60['츤데레'];
-  if (affection >= 40) return STAGE_LINES.s40[persona] || STAGE_LINES.s40['츤데레'];
-  if (affection >= 20) return STAGE_LINES.s20[persona] || STAGE_LINES.s20['츤데레'];
-  return STAGE_LINES.s0[persona] || STAGE_LINES.s0['츤데레'];
+  let line;
+  if (affection >= 80) line = STAGE_LINES.s80[persona] || STAGE_LINES.s80['츤데레'];
+  else if (affection >= 60) line = STAGE_LINES.s60[persona] || STAGE_LINES.s60['츤데레'];
+  else if (affection >= 40) line = STAGE_LINES.s40[persona] || STAGE_LINES.s40['츤데레'];
+  else if (affection >= 20) line = STAGE_LINES.s20[persona] || STAGE_LINES.s20['츤데레'];
+  else line = STAGE_LINES.s0[persona] || STAGE_LINES.s0['츤데레'];
+  return S.nick ? `${S.nick}... ${line}` : line;
 }
 
 const GENDERS = ['남성', '여성'];
@@ -1482,6 +1484,9 @@ function initGame() {
   initCourseUI();
   selectCourse(S.curIdx < S.courses.length ? S.curIdx : 0);
   showGuideIfNeeded();
+  setTimeout(positionCalBtn, 0);
+  setTimeout(positionCalBtn, 100);
+  setTimeout(positionCalBtn, 300);
 }
 
 function handleSceneTap() {
