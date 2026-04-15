@@ -698,15 +698,27 @@
     }
     .btn-mode {
       flex: 1;
-      padding: 8px 3px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-sub);
+      padding: 10px 3px;
+      border-radius: 14px;
       font-family: 'Noto Sans KR', sans-serif;
-      font-size: 11.5px;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
       transition: all .18s;
+    }
+    #btn-task {
+      background: rgba(255,122,178,0.2);
+      border: 1px solid rgba(255,122,178,0.6);
+      color: #FF7AB2;
+    }
+    #btn-qna {
+      background: rgba(122,207,255,0.15);
+      border: 1px solid rgba(122,207,255,0.5);
+      color: #7ACFFF;
+    }
+    .btn-mode:hover, .btn-mode:active {
+      filter: brightness(1.1);
+      transform: scale(.98);
     }
     /* (index2) removed unused: .btn-mode.active / .btn-done / .input-row */
     /* (index2) removed chat input / send / API buttons */
@@ -1270,6 +1282,57 @@ const STAGES = [
   { min: 80, name: '특별한 사이 💕',         line: '...사실 처음부터 너만 봤어.' },
 ];
 
+const STAGE_LINES = {
+  s0: {
+    '츤데레': "...왜 자꾸 눈에 띄는 거야. 신경 쓰이게.",
+    '단데레': "...아직 잘 모르겠어. 근데 나쁘진 않아.",
+    '얀데레': "아직 어색하지만... 앞으로 잘 부탁해!",
+    '쿨데레': "...아직 데이터가 부족해. 더 지켜볼게.",
+    '혈기왕성': "아직 어색하지만 금방 친해질 수 있어!",
+    '선배형': "...아직 서먹하네. 천천히 알아가자."
+  },
+  s20: {
+    '츤데레': "...뭐야, 자꾸 생각나잖아. 짜증나.",
+    '단데레': "...네가 오면 좋아. 말하긴 부끄럽지만.",
+    '얀데레': "자꾸 네 생각이 나! 이상한 거 아니지?",
+    '쿨데레': "...흥미로운 데이터가 쌓이고 있어.",
+    '혈기왕성': "요즘 네 생각 자주 해! 좋은 거지?",
+    '선배형': "...요즘 네가 신경 쓰여. 잘 되길 바라서야."
+  },
+  s40: {
+    '츤데레': "...요즘 네가 신경 쓰여. 말하기 싫지만.",
+    '단데레': "...네 옆에 있으면 마음이 편해.",
+    '얀데레': "너 없으면 이상해. 항상 옆에 있어줘!",
+    '쿨데레': "...감정이 개입되고 있어. 예상 밖이야.",
+    '혈기왕성': "네랑 있으면 더 신나! 왜 그런 거지?",
+    '선배형': "...어느새 많이 의지하게 됐어. 고마워."
+  },
+  s60: {
+    '츤데레': "...다른 사람 신경 쓰지 마. 나만 봐.",
+    '단데레': "...너만 생각해. 하루 종일.",
+    '얀데레': "나만 봐! 다른 거 생각하면 안 돼!",
+    '쿨데레': "...판단력에 이상이 생겼어. 네 때문이야.",
+    '혈기왕성': "온종일 네 생각뿐이야! 어떡하지?",
+    '선배형': "...이건 단순한 관심이 아닌 것 같아."
+  },
+  s80: {
+    '츤데레': "...처음부터 너였어. 인정하기 싫었지만.",
+    '단데레': "...특별해. 너만 그래.",
+    '얀데레': "드디어 특별한 사이야! 영원히 내 거야!",
+    '쿨데레': "...결론이 났어. 넌 특별한 변수야.",
+    '혈기왕성': "우리 이제 특별한 사이지? 최고야!",
+    '선배형': "...네가 특별하다는 걸 이제 인정할게."
+  }
+};
+
+function getStageLineForPersona(affection, persona) {
+  if (affection >= 80) return STAGE_LINES.s80[persona] || STAGE_LINES.s80['츤데레'];
+  if (affection >= 60) return STAGE_LINES.s60[persona] || STAGE_LINES.s60['츤데레'];
+  if (affection >= 40) return STAGE_LINES.s40[persona] || STAGE_LINES.s40['츤데레'];
+  if (affection >= 20) return STAGE_LINES.s20[persona] || STAGE_LINES.s20['츤데레'];
+  return STAGE_LINES.s0[persona] || STAGE_LINES.s0['츤데레'];
+}
+
 const GENDERS = ['남성', '여성'];
 
 /* ───────────── STATE ───────────── */
@@ -1396,19 +1459,14 @@ function initGame() {
 function handleSceneTap() {
   if (_flow && _flow.active) return;
   const persona = personaOfCourse(S.curIdx);
+  const c = S.courses[S.curIdx];
+  const cycle = _tapCount % 3;
 
-  if (_tapCount === 0) {
-    const greetLines = {
-      '츤데레': `...어, ${S.nick}. 왔어. 과제 있으면 말해. 아니면 같이 공부하든가.`,
-      '단데레': `...안녕, ${S.nick}. 과제 있으면 같이 정리하자. 아니면 공부 데이트도 괜찮아.`,
-      '얀데레': `${S.nick} 왔어! 기다렸어! 과제 알려줘! 아니면 지금 바로 공부 데이트하자!`,
-      '쿨데레': `${S.nick}. 왔군. 과제 등록하거나 공부 데이트 중 선택해.`,
-      '혈기왕성': `${S.nick}! 왔어! 과제 있어? 없으면 지금 바로 공부 데이트 하자!`,
-      '선배형': `왔어, ${S.nick}. 과제 있으면 얘기해. 집중하고 싶으면 같이 공부하자.`
-    };
-    typeText(greetLines[persona] || greetLines['츤데레']);
-    _tapCount++;
-  } else if (_tapCount === 1) {
+  if (cycle === 0) {
+    // 자동 대사 (마감일 or noTask)
+    showAutoLineForCourse(S.curIdx);
+  } else if (cycle === 1) {
+    // 학과 대사
     const majorLines = {
       '츤데레': `${S.major}생치고는... 뭐, 나쁘지 않네.`,
       '단데레': `...${S.major} 공부 힘들지? 괜찮아.`,
@@ -1418,10 +1476,13 @@ function handleSceneTap() {
       '선배형': `${S.major}라면 이 정도는 할 수 있어.`
     };
     typeText(majorLines[persona] || majorLines['츤데레']);
-    _tapCount++;
   } else {
-    showAutoLineForCourse(S.curIdx);
+    // 단계 대사
+    const affection = (c && c.affection) || 0;
+    const stageLine = getStageLineForPersona(affection, persona);
+    typeText(stageLine, true);
   }
+  _tapCount++;
 }
 
 function showGuideIfNeeded() {
@@ -1439,6 +1500,20 @@ function openGuide() {
 function closeGuide() {
   const ov = document.getElementById('guide-overlay');
   if (ov) ov.classList.remove('show');
+
+  if (_tapCount === 0) {
+    const persona = personaOfCourse(S.curIdx);
+    const greetLines = {
+      '츤데레': `...어, ${S.nick}. 왔어. 과제 있으면 말해. 아니면 같이 공부하든가.`,
+      '단데레': `...안녕, ${S.nick}. 과제 있으면 같이 정리하자. 아니면 공부 데이트도 괜찮아.`,
+      '얀데레': `${S.nick} 왔어! 기다렸어! 과제 알려줘! 아니면 지금 바로 공부 데이트하자!`,
+      '쿨데레': `${S.nick}. 왔군. 과제 등록하거나 공부 데이트 중 선택해.`,
+      '혈기왕성': `${S.nick}! 왔어! 과제 있어? 없으면 지금 바로 공부 데이트 하자!`,
+      '선배형': `왔어, ${S.nick}. 과제 있으면 얘기해. 집중하고 싶으면 같이 공부하자.`
+    };
+    typeText(greetLines[persona] || greetLines['츤데레']);
+    _tapCount = 1;
+  }
 }
 
 function togglePersonaTip(btn) {
@@ -1498,7 +1573,7 @@ function selectCourse(i) {
         '선배형': `왔어, ${S.nick}. 과제 있으면 얘기해. 집중하고 싶으면 같이 공부하자.`
       };
       typeText(greetLines[persona] || greetLines['츤데레']);
-      _tapCount++;
+      _tapCount = 1;
     } else {
       showAutoLineForCourse(i);
     }
@@ -1577,9 +1652,6 @@ function changeAff(delta) {
       void h.offsetWidth;
       h.classList.add('beat');
     }
-  }
-  if (getStage(c.affection).name !== prevName) {
-    setTimeout(() => typeText(getStage(c.affection).line), 600);
   }
 }
 
@@ -2314,10 +2386,17 @@ function studyReset(){
 /* ───────────── TYPING (한 글자씩 순차) ───────────── */
 let _tid = null;
 
-function typeText(text) {
+function typeText(text, highlight = false) {
   if (_tid) { clearTimeout(_tid); _tid = null; }
   const el = document.getElementById('dlg-text');
   el.textContent = '';
+  if (highlight) {
+    el.style.color = '#FF7AB2';
+    el.style.textShadow = '0 0 12px rgba(255,122,178,0.4)';
+  } else {
+    el.style.color = '';
+    el.style.textShadow = '';
+  }
   const chars = [...text];
   let i = 0;
   function next() {
