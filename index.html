@@ -1218,6 +1218,34 @@
   </div>
 </div>
 
+<div class="cal-overlay" id="delete-overlay">
+  <div class="edit-card" onclick="event.stopPropagation()" style="max-width:300px;text-align:center;">
+    <div style="font-size:15px;color:rgba(255,255,255,.92);font-weight:700;margin-bottom:6px;" id="delete-title"></div>
+    <div style="font-size:12px;color:rgba(255,200,220,0.6);margin-bottom:18px;">
+      삭제하면 되돌릴 수 없어요 🥲
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeDeleteConfirm()" class="edit-cancel">취소</button>
+      <button onclick="confirmDelete()" style="flex:1;background:rgba(255,80,80,0.25);border:1px solid rgba(255,80,80,0.6);color:#ff6b6b;border-radius:12px;font-family:'Noto Sans KR',sans-serif;padding:10px 20px;font-size:14px;cursor:pointer;">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="cal-overlay" id="study-reset-overlay">
+  <div class="edit-card" onclick="event.stopPropagation()" style="max-width:300px;text-align:center;">
+    <div style="font-size:15px;color:rgba(255,255,255,.92);font-weight:700;margin-bottom:6px;">
+      타이머를 리셋할까요?
+    </div>
+    <div style="font-size:12px;color:rgba(255,200,220,0.6);margin-bottom:18px;">
+      집중 기록이 초기화돼요 🥲
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeStudyReset()" class="edit-cancel">취소</button>
+      <button onclick="confirmStudyReset()" style="flex:1;background:rgba(255,80,80,0.25);border:1px solid rgba(255,80,80,0.6);color:#ff6b6b;border-radius:12px;font-family:'Noto Sans KR',sans-serif;padding:10px 20px;font-size:14px;cursor:pointer;">리셋</button>
+    </div>
+  </div>
+</div>
+
 <div class="tasks-drawer" id="tasks-drawer">
   <div class="tasks-sheet">
     <div class="tasks-head">
@@ -1939,7 +1967,7 @@ function renderRegisterStep2() {
   f.style.display = 'flex';
   f.style.flexDirection = 'column';
   f.innerHTML =
-    '<input id="reg-deadline" type="date" onclick="event.stopPropagation()" style="width:100%;position:relative;z-index:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;">' +
+    '<input id="reg-deadline" type="date" onclick="event.stopPropagation(); this.showPicker && this.showPicker();" style="width:100%;position:relative;z-index:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;">' +
     '<div style="display:flex;gap:8px;">' +
     '  <button id="reg-prev2" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);font-weight:800;cursor:pointer;">← 이전</button>' +
     '  <button id="reg-next2" style="flex:2;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),#d9549a);color:#fff;font-weight:800;cursor:pointer;">다음</button>' +
@@ -2093,7 +2121,7 @@ function renderTaskDrawer() {
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button class="btn-task-done" style="${t.done ? 'opacity:.6;' : ''}" onclick="openConfirm(${t.id})">✓ 완료 +10</button>
           <button class="btn-task-edit" onclick="openEditTask(${t.id})">수정</button>
-          <button class="btn-task-done" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:rgba(255,255,255,.82);" onclick="deleteTask(${t.id})">삭제</button>
+          <button class="btn-task-done" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:rgba(255,255,255,.82);" onclick="openDeleteConfirm(${t.id})">삭제</button>
         </div>
       </div>
       <div class="task-text">마감일: ${esc(t.deadline || '')}</div>
@@ -2154,6 +2182,7 @@ let _confirmTaskId = null;
 function openConfirm(id) {
   const t = (S.tasks || []).find(x => x && x.id === id);
   if (!t) return;
+  if (t.done) return;
   _confirmTaskId = id;
   document.getElementById('confirm-title').textContent = '"' + t.name + '" 완료했나요?';
   document.getElementById('confirm-overlay').classList.add('show');
@@ -2185,6 +2214,27 @@ function markTaskDone(id) {
     } else save();
   } else save();
   renderTaskDrawer();
+}
+
+let _deleteTaskId = null;
+
+function openDeleteConfirm(id) {
+  const t = (S.tasks || []).find(x => x && x.id === id);
+  if (!t) return;
+  _deleteTaskId = id;
+  document.getElementById('delete-title').textContent = '"' + t.name + '" 삭제할까요?';
+  document.getElementById('delete-overlay').classList.add('show');
+}
+
+function closeDeleteConfirm() {
+  document.getElementById('delete-overlay').classList.remove('show');
+  _deleteTaskId = null;
+}
+
+function confirmDelete() {
+  const id = _deleteTaskId;
+  closeDeleteConfirm();
+  if (id) deleteTask(id);
 }
 
 function deleteTask(id) {
@@ -2289,7 +2339,7 @@ function ensureStudyScreen(){
         </div>
         <div style="display:flex;gap:8px;">
           <button class="study-btn study-btn-start" id="study-start" onclick="studyToggle()">시작</button>
-          <button class="study-btn study-btn-reset" onclick="studyReset()">리셋</button>
+          <button class="study-btn study-btn-reset" onclick="openStudyReset()">리셋</button>
         </div>
       </div>
     </div>
@@ -2357,8 +2407,48 @@ function studyToggle(){
     btn.classList.toggle('study-btn-pause', _study.running);
     btn.classList.toggle('study-btn-start', !_study.running);
   }
-  if(_study.running){ if(_study.timer) clearInterval(_study.timer); _study.timer=setInterval(studyTick,1000); }
-  else { if(_study.timer) clearInterval(_study.timer); _study.timer=null; }
+  if(_study.running){
+    if(_study.timer) clearInterval(_study.timer);
+    _study.timer=setInterval(studyTick,1000);
+    const isFirstStart = _study.doneCount === 0 && _study.remain === 1500;
+    if (!isFirstStart) {
+      const resumeLines = {
+        '츤데레': "...다시 집중해. 딴짓하지 마.",
+        '단데레': "...다시 시작하자. 같이.",
+        '얀데레': "다시 시작! 나만 봐!",
+        '쿨데레': "재개. 집중 유지해.",
+        '혈기왕성': "다시 달리자! 파이팅!",
+        '선배형': "다시 시작하자. 할 수 있어."
+      };
+      const p = personaOfCourse(S.curIdx);
+      const studyDlg = document.getElementById('study-text');
+      if(studyDlg) studyDlg.textContent = resumeLines[p] || resumeLines['츤데레'];
+    }
+  } else {
+    if(_study.timer) clearInterval(_study.timer);
+    _study.timer=null;
+    const pauseLines = {
+      '츤데레': "...잠깐 쉬는 거야. 딱 잠깐만.",
+      '단데레': "...잠깐 쉬어. 금방 다시 하자.",
+      '얀데레': "잠깐 멈춘 거지? 나 두고 가면 안 돼!",
+      '쿨데레': "일시정지. 언제든 재개 가능.",
+      '혈기왕성': "잠깐 쉬자! 금방 다시 달리자!",
+      '선배형': "잠깐 쉬어. 무리하지 마."
+    };
+    const p = personaOfCourse(S.curIdx);
+    const studyDlg = document.getElementById('study-text');
+    if(studyDlg) studyDlg.textContent = pauseLines[p] || pauseLines['츤데레'];
+  }
+}
+function openStudyReset() {
+  document.getElementById('study-reset-overlay').classList.add('show');
+}
+function closeStudyReset() {
+  document.getElementById('study-reset-overlay').classList.remove('show');
+}
+function confirmStudyReset() {
+  closeStudyReset();
+  studyReset();
 }
 function studyReset(){
   _study.running=false;
