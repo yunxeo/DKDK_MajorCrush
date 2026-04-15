@@ -626,6 +626,11 @@
       cursor: pointer;
       font-size: 12px;
       font-weight: 700;
+      position: relative;
+      z-index: 100;
+      pointer-events: auto;
+      min-height: 44px;
+      min-width: 44px;
     }
     .tasks-list {
       overflow: auto;
@@ -1125,6 +1130,39 @@
 
 </div>
 
+<div class="cal-overlay" id="guide-overlay">
+  <div class="cal-card" onclick="event.stopPropagation()" style="max-width:320px;">
+    <div style="font-family:'HSBombaram',cursive;color:#FF7AB2;font-size:18px;margin-bottom:14px;text-align:center;">
+      사용 방법
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+      <div style="font-size:13px;color:rgba(255,255,255,.86);line-height:1.6;">
+        📝 <b>과제 등록</b><br>
+        캐릭터와 대화하며 과제를 등록해요.<br>
+        마감일이 다가올수록 캐릭터가 조르기 시작해요.
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.86);line-height:1.6;">
+        📋 <b>내 과제함</b><br>
+        등록한 과제 확인 및 완료 처리.<br>
+        완료할수록 호감도가 올라가요 💕
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.86);line-height:1.6;">
+        💕 <b>공부 데이트</b><br>
+        25분 집중 타이머를 시작하면<br>
+        캐릭터가 옆에서 함께해요.
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.86);line-height:1.6;">
+        📅 <b>캘린더</b><br>
+        호감도 창 아래 📅 버튼을 누르면<br>
+        전체 과제 마감일을 한눈에 볼 수 있어요.
+      </div>
+    </div>
+    <button onclick="closeGuide()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FF7AB2,#d9549a);border:none;border-radius:12px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+      시작하기 💕
+    </button>
+  </div>
+</div>
+
 <div class="cal-overlay" id="cal-overlay" onclick="closeCalendar(true)">
   <div class="cal-card" onclick="event.stopPropagation()">
     <div class="cal-top">
@@ -1153,11 +1191,11 @@
   </div>
 </div>
 
-<div class="tasks-drawer" id="tasks-drawer" onclick="closeTasks(true)">
-  <div class="tasks-sheet" onclick="event.stopPropagation()">
+<div class="tasks-drawer" id="tasks-drawer">
+  <div class="tasks-sheet">
     <div class="tasks-head">
       <div class="tasks-title">내 과제함</div>
-      <button class="btn-close" onclick="closeTasks(false)">닫기</button>
+      <button class="btn-close" onclick="closeTasks()">닫기</button>
     </div>
     <div class="tasks-list" id="tasks-list"></div>
   </div>
@@ -1293,7 +1331,7 @@ function finishReg() {
 }
 
 /* ───────────── SCREEN 3 ───────────── */
-function initGame() { initCourseUI(); selectCourse(S.curIdx < S.courses.length ? S.curIdx : 0); }
+function initGame() { initCourseUI(); selectCourse(S.curIdx < S.courses.length ? S.curIdx : 0); showGuideIfNeeded(); }
 
 function initCourseUI() {
   renderCourseMenu();
@@ -1531,7 +1569,7 @@ const PERSONA_LINES = {
 
 const REG_LINES = {
   step1: {
-    '츤데레': "나랑 약속한 거 있잖아... 뭐였더라?",
+    '츤데레': "나랑 약속한 거? 아... 뭐였더라?",
     '단데레': "...저번에 얘기했던 거 있잖아. 뭐였더라?",
     '얀데레': "우리 같이 할 거! 뭐였는지 기억해?",
     '쿨데레': "해야 할 거 정리해두자. 뭔데?",
@@ -1550,7 +1588,7 @@ const REG_LINES = {
     '츤데레': "자세한 내용이 뭐였는지... 말해봐.",
     '단데레': "...자세히 적어둘게. 말해줘.",
     '얀데레': "자세한 내용도 알려줘! 다 기억할게!",
-    '쿨데레': "상세내용 있으면 입력해.",
+    '쿨데레': "상세내용 있으면 적어둬.",
     '혈기왕성': "자세한 내용도 알려줘! 완벽하게 준비하자!",
     '선배형': "상세내용 있으면 적어둬. 내가 챙길게."
   },
@@ -1761,6 +1799,7 @@ function renderRegisterStep3() {
 let _drawerCourseIdx = null;
 let _taskView = 'all';
 function openTasks() { _drawerCourseIdx = S.curIdx; renderTaskDrawer(); document.getElementById('tasks-drawer').classList.add('show'); }
+function closeTasks() { document.getElementById('tasks-drawer').classList.remove('show'); }
 
 function renderTaskDrawer() {
   const list = document.getElementById('tasks-list');
@@ -1943,6 +1982,16 @@ function positionCalBtn() {
 }
 function openCalendar(){ const ov=document.getElementById('cal-overlay'); if(!ov) return; const now=new Date(); if(!_cal.y){_cal.y=now.getFullYear();_cal.m=now.getMonth();} if(!_cal.selected) _cal.selected=ymd(now); positionCalBtn(); ov.classList.add('show'); renderCalendar(); }
 function closeCalendar(){ const ov=document.getElementById('cal-overlay'); if(!ov) return; ov.classList.remove('show'); }
+function showGuideIfNeeded() {
+  if (localStorage.getItem('dkdk_guide_shown')) return;
+  const ov = document.getElementById('guide-overlay');
+  if (ov) ov.classList.add('show');
+}
+function closeGuide() {
+  localStorage.setItem('dkdk_guide_shown', '1');
+  const ov = document.getElementById('guide-overlay');
+  if (ov) ov.classList.remove('show');
+}
 function calMove(delta){ const d=new Date(_cal.y,_cal.m+delta,1); _cal.y=d.getFullYear(); _cal.m=d.getMonth(); renderCalendar(); }
 function tasksByDayMap(){ const map={}; (S.tasks||[]).forEach(t=>{ if(!t||!t.deadline) return; (map[t.deadline] ||= []).push(t); }); return map; }
 function renderCalendar(){

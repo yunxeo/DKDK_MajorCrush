@@ -166,8 +166,9 @@
       background: rgba(26,15,46,.97);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
-      padding: 15px 20px;
+      padding: 12px 20px 14px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
     }
@@ -229,6 +230,7 @@
       color: var(--text-sub);
       margin-bottom: 7px;
       letter-spacing: .04em;
+      position: relative;
     }
 
     .gender-row {
@@ -602,6 +604,7 @@
       border-bottom: none;
       border-radius: 18px 18px 0 0;
       padding: 14px 14px 18px;
+      padding-bottom: calc(18px + env(safe-area-inset-bottom));
       max-height: 70vh;
       overflow: hidden;
     }
@@ -611,6 +614,9 @@
       justify-content: space-between;
       gap: 10px;
       margin-bottom: 10px;
+      position: sticky;
+      top: 0;
+      background: rgba(10,6,20,.96);
     }
     .tasks-title {
       font-family: 'HSBombaram', cursive;
@@ -626,6 +632,11 @@
       cursor: pointer;
       font-size: 12px;
       font-weight: 700;
+      position: relative;
+      z-index: 100;
+      pointer-events: auto;
+      min-height: 44px;
+      min-width: 44px;
     }
     .tasks-list {
       overflow: auto;
@@ -756,6 +767,28 @@
         0 1px 0 rgba(255,255,255,.06) inset;
     }
     .btn-cal:active { opacity: .85; }
+    .btn-info {
+      position: absolute;
+      right: 10px;
+      z-index: 10;
+      background: #FF7AB2;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Georgia', serif;
+      cursor: pointer;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(255,122,178,0.4);
+    }
+    .btn-info:active { opacity: .75; }
 
     /* ───────────── STUDY DATE BUTTONS (index2) ───────────── */
     .study-btn {
@@ -804,6 +837,8 @@
       width: 85%;
       max-width: 340px;
       padding: 14px 14px 12px;
+      max-height: 85vh;
+      overflow-y: auto;
     }
     .cal-top {
       display: flex;
@@ -811,6 +846,7 @@
       justify-content: space-between;
       gap: 10px;
       margin-bottom: 10px;
+      flex-wrap: wrap;
     }
     .cal-nav {
       display: flex;
@@ -1068,7 +1104,10 @@
   ══════════════════════════════ -->
   <div id="screen-registration" class="screen">
     <div class="fixed-top">
-      <span class="fixed-top-title">수강신청</span>
+      <div class="fixed-top-title">수강신청</div>
+      <div style="font-size:11px;color:rgba(255,200,220,0.6);text-align:center;margin-top:4px;">
+        과목을 등록하면 캐릭터로 만날 수 있어요 💕
+      </div>
     </div>
     <div class="scroll-area" id="course-list"></div>
     <div class="fixed-bottom" style="display:flex;flex-direction:column;gap:8px;">
@@ -1103,6 +1142,7 @@
         </div>
       </div>
       <button class="btn-cal" title="캘린더" onclick="openCalendar()">📅</button>
+      <button class="btn-info" title="사용 방법" onclick="openGuide()">i</button>
     </div>
     <div class="char-holder">
       <img id="char-img" class="char-img" alt="캐릭터">
@@ -1113,8 +1153,8 @@
         <div class="dlg-name" id="dlg-name">과목명</div>
         <button class="btn-tasks" onclick="openTasks()">내 과제함</button>
       </div>
-      <div class="dlg-text" id="dlg-text"></div>
       <div id="dlg-form"></div>
+      <div class="dlg-text" id="dlg-text"></div>
       <div class="guide" id="guide"></div>
       <div class="mode-row">
         <button class="btn-mode active" id="btn-task" onclick="startTaskRegister()">📝 과제 등록</button>
@@ -1153,13 +1193,59 @@
   </div>
 </div>
 
-<div class="tasks-drawer" id="tasks-drawer" onclick="closeTasks(true)">
-  <div class="tasks-sheet" onclick="event.stopPropagation()">
+<div class="cal-overlay" id="confirm-overlay">
+  <div class="edit-card" onclick="event.stopPropagation()" style="max-width:300px;text-align:center;">
+    <div style="font-size:15px;color:rgba(255,255,255,.92);font-weight:700;margin-bottom:6px;" id="confirm-title"></div>
+    <div style="font-size:12px;color:rgba(255,200,220,0.6);margin-bottom:18px;">
+      완료하면 호감도 +10이 올라가요 💕
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeConfirm()" class="edit-cancel">취소</button>
+      <button onclick="confirmDone()" class="edit-save">완료 ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="tasks-drawer" id="tasks-drawer">
+  <div class="tasks-sheet">
     <div class="tasks-head">
       <div class="tasks-title">내 과제함</div>
-      <button class="btn-close" onclick="closeTasks(false)">닫기</button>
+      <button class="btn-close" onclick="closeTasks()">닫기</button>
     </div>
     <div class="tasks-list" id="tasks-list"></div>
+  </div>
+</div>
+
+<div class="cal-overlay" id="guide-overlay">
+  <div class="cal-card" onclick="event.stopPropagation()" style="max-width:320px;">
+    <div style="font-family:'HSBombaram',cursive;color:#FF7AB2;font-size:18px;margin-bottom:14px;text-align:center;">
+      사용 방법
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+      <div style="font-size:13px;color:rgba(255,255,255,.86);line-height:1.6;">
+        📝 <b>과제 등록</b><br>
+        캐릭터와 대화하며 과제를 등록해요.<br>
+        마감일이 다가올수록 캐릭터가 조르기 시작해요.
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.86);line-height:1.6;">
+        📋 <b>내 과제함</b><br>
+        등록한 과제 확인 및 완료 처리.<br>
+        완료할수록 호감도가 올라가요 💕
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.86);line-height:1.6;">
+        💕 <b>공부 데이트</b><br>
+        25분 집중 타이머를 시작하면<br>
+        캐릭터가 옆에서 함께해요.
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.86);line-height:1.6;">
+        📅 <b>캘린더</b><br>
+        호감도 창 아래 📅 버튼을 누르면<br>
+        전체 과제 마감일을 한눈에 볼 수 있어요.
+      </div>
+    </div>
+    <button onclick="closeGuide()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FF7AB2,#d9549a);border:none;border-radius:12px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+      시작하기 💕
+    </button>
   </div>
 </div>
 
@@ -1261,6 +1347,8 @@ function setPersona(i,v,btn) {
 
 function renderCourses() {
   const list = document.getElementById('course-list');
+  const topH = document.querySelector('.fixed-top')?.offsetHeight || 70;
+  list.style.paddingTop = (topH + 10) + 'px';
   list.innerHTML = '';
   S.courses.forEach((c,i) => {
     const card = document.createElement('div');
@@ -1275,7 +1363,10 @@ function renderCourses() {
       <div class="gender-row">
         ${GENDERS.map(g=>`<button class="btn-gender${c.gender===g?' sel':''}" onclick="setGender(${i},'${g}',this)">${g}</button>`).join('')}
       </div>
-      <div class="sec-label">성격</div>
+      <div class="sec-label">성격
+        <button onclick="togglePersonaTip(this)" style="background:rgba(255,122,178,0.15);border:1px solid rgba(255,122,178,0.3);border-radius:999px;width:16px;height:16px;font-size:10px;color:#FF7AB2;cursor:pointer;margin-left:6px;padding:0;line-height:1;vertical-align:middle;">?</button>
+        <div class="persona-tip" style="display:none;position:absolute;background:rgba(10,6,20,0.96);border:1px solid rgba(255,122,178,0.3);border-radius:10px;padding:8px 12px;font-size:11px;color:rgba(255,255,255,0.86);z-index:100;max-width:200px;top:20px;left:0;line-height:1.6;">캐릭터의 말투와 성격이 결정돼요.<br>성별에 따라 캐릭터 이미지도 달라져요!</div>
+      </div>
       <div class="persona-grid">
         ${PERSONAS.map(p=>`<button class="btn-persona${c.persona===p.name?' sel':''}" onclick="setPersona(${i},'${p.name}',this)"><span class="pn">${p.name}</span><span class="pd">${p.desc}</span></button>`).join('')}
       </div>`;
@@ -1293,7 +1384,37 @@ function finishReg() {
 }
 
 /* ───────────── SCREEN 3 ───────────── */
-function initGame() { initCourseUI(); selectCourse(S.curIdx < S.courses.length ? S.curIdx : 0); }
+function initGame() { initCourseUI(); selectCourse(S.curIdx < S.courses.length ? S.curIdx : 0); showGuideIfNeeded(); }
+
+function showGuideIfNeeded() {
+  if (localStorage.getItem('dkdk_guide_shown')) return;
+  localStorage.setItem('dkdk_guide_shown', '1');
+  const ov = document.getElementById('guide-overlay');
+  if (ov) ov.classList.add('show');
+}
+
+function openGuide() {
+  const ov = document.getElementById('guide-overlay');
+  if (ov) ov.classList.add('show');
+}
+
+function closeGuide() {
+  const ov = document.getElementById('guide-overlay');
+  if (ov) ov.classList.remove('show');
+}
+
+function togglePersonaTip(btn) {
+  const tip = btn.nextElementSibling;
+  const isVisible = tip.style.display !== 'none';
+  closeAllPersonaTips();
+  if (!isVisible) tip.style.display = 'block';
+}
+function closeAllPersonaTips() {
+  document.querySelectorAll('.persona-tip').forEach(t => t.style.display = 'none');
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.sec-label')) closeAllPersonaTips();
+});
 
 function initCourseUI() {
   renderCourseMenu();
@@ -1695,14 +1816,14 @@ function renderRegisterStep2() {
   f.style.display = 'flex';
   f.style.flexDirection = 'column';
   f.innerHTML =
-    '<input id="reg-deadline" type="date" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;">' +
+    '<input id="reg-deadline" type="date" style="width:100%;position:relative;z-index:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;">' +
     '<div style="display:flex;gap:8px;">' +
     '  <button id="reg-prev2" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);font-weight:800;cursor:pointer;">← 이전</button>' +
     '  <button id="reg-next2" style="flex:2;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),#d9549a);color:#fff;font-weight:800;cursor:pointer;">다음</button>' +
     '</div>';
+  const today = new Date();
   const dl = document.getElementById('reg-deadline');
   if (dl) {
-    const today = new Date();
     dl.min = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
     dl.value = _flow.deadline || '';
   }
@@ -1761,6 +1882,7 @@ function renderRegisterStep3() {
 let _drawerCourseIdx = null;
 let _taskView = 'all';
 function openTasks() { _drawerCourseIdx = S.curIdx; renderTaskDrawer(); document.getElementById('tasks-drawer').classList.add('show'); }
+function closeTasks() { document.getElementById('tasks-drawer').classList.remove('show'); }
 
 function renderTaskDrawer() {
   const list = document.getElementById('tasks-list');
@@ -1846,7 +1968,7 @@ function renderTaskDrawer() {
       <div class="task-top">
         <div class="task-course"><span style="font-weight:900;">${esc(t.name)}</span>${badge}</div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button class="btn-task-done" style="${t.done ? 'opacity:.6;' : ''}" onclick="markTaskDone(${t.id})">✓ 완료 +10</button>
+          <button class="btn-task-done" style="${t.done ? 'opacity:.6;' : ''}" onclick="openConfirm(${t.id})">✓ 완료 +10</button>
           <button class="btn-task-edit" onclick="openEditTask(${t.id})">수정</button>
           <button class="btn-task-done" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:rgba(255,255,255,.82);" onclick="deleteTask(${t.id})">삭제</button>
         </div>
@@ -1904,6 +2026,27 @@ function saveEditTask() {
   if (t.courseIdx === S.curIdx && !_flow.active) setTimeout(function(){ showAutoLineForCourse(S.curIdx); }, 0);
 }
 
+let _confirmTaskId = null;
+
+function openConfirm(id) {
+  const t = (S.tasks || []).find(x => x && x.id === id);
+  if (!t) return;
+  _confirmTaskId = id;
+  document.getElementById('confirm-title').textContent = '"' + t.name + '" 완료했나요?';
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('show');
+  _confirmTaskId = null;
+}
+
+function confirmDone() {
+  const id = _confirmTaskId;
+  closeConfirm();
+  if (id) markTaskDone(id);
+}
+
 function markTaskDone(id) {
   const t = (S.tasks || []).find(x => x && x.id === id);
   if (!t) return;
@@ -1940,6 +2083,14 @@ function positionCalBtn() {
   if (!btn || !panel) return;
   const r = panel.getBoundingClientRect();
   btn.style.top = Math.round(r.bottom + 8) + 'px';
+  positionInfoBtn();
+}
+function positionInfoBtn() {
+  const calBtn = document.querySelector('.btn-cal');
+  const infoBtn = document.querySelector('.btn-info');
+  if (!calBtn || !infoBtn) return;
+  const r = calBtn.getBoundingClientRect();
+  infoBtn.style.top = Math.round(r.bottom + 8) + 'px';
 }
 function openCalendar(){ const ov=document.getElementById('cal-overlay'); if(!ov) return; const now=new Date(); if(!_cal.y){_cal.y=now.getFullYear();_cal.m=now.getMonth();} if(!_cal.selected) _cal.selected=ymd(now); positionCalBtn(); ov.classList.add('show'); renderCalendar(); }
 function closeCalendar(){ const ov=document.getElementById('cal-overlay'); if(!ov) return; ov.classList.remove('show'); }
