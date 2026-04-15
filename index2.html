@@ -1196,7 +1196,7 @@
   <div class="edit-card" onclick="event.stopPropagation()">
     <div class="edit-title">과제 수정</div>
     <input id="edit-name" class="edit-field" placeholder="과제명">
-    <input id="edit-deadline" class="edit-field" type="date">
+    <input id="edit-deadline" class="edit-field" type="date" onclick="event.stopPropagation()">
     <textarea id="edit-detail" class="edit-field" rows="4" placeholder="상세내용"></textarea>
     <div class="edit-actions">
       <button class="edit-save" onclick="saveEditTask()">저장</button>
@@ -1275,11 +1275,11 @@ const PERSONAS = [
 ];
 
 const STAGES = [
-  { min:  0, name: '아직 어색한 사이',       line: '...수강신청한 사람이 너야?' },
-  { min: 20, name: '조금씩 알아가는 사이',   line: '뭐, 생각보다 열심히 하네.' },
-  { min: 40, name: '제법 가까워진 사이',     line: '오늘도 왔구나. ...기다렸어.' },
-  { min: 60, name: '너만 생각하는 중',       line: '다른 과목이랑 같이 공부하지 마.' },
-  { min: 80, name: '특별한 사이 💕',         line: '...사실 처음부터 너만 봤어.' },
+  { min:  0, name: '아직 어색한 사이' },
+  { min: 20, name: '조금씩 알아가는 사이' },
+  { min: 40, name: '제법 가까워진 사이' },
+  { min: 60, name: '너만 생각하는 중' },
+  { min: 80, name: '특별한 사이 💕' },
 ];
 
 const STAGE_LINES = {
@@ -1640,7 +1640,6 @@ function updateAffUI(v) {
 
 function changeAff(delta) {
   const c = S.courses[S.curIdx];
-  const prevName = getStage(c.affection).name;
   c.affection = Math.max(0, Math.min(100, (c.affection||0) + delta));
   save(); updateAffUI(c.affection);
   flashNotif(delta > 0 ? `+${delta} 호감도 상승!` : `${delta} 호감도 감소`);
@@ -1724,21 +1723,13 @@ function flashNotif(msg) {
 const COURSE_COLORS = ['#FF7AB2', '#7ACFFF', '#a78bfa', '#34d399', '#fbbf24', '#e879f9'];
 
 const PERSONA_LINES = {
-  greet: {
-    '츤데레': "...어, 왔어. 과제 있으면 말해. 아니면 같이 공부하든가.",
-    '단데레': "...안녕. 과제 있으면 같이 정리하자. 아니면 공부 데이트도 괜찮아.",
-    '얀데레': "왔어! 기다렸어! 과제 알려줘! 아니면 지금 바로 공부 데이트하자!",
-    '쿨데레': "왔군. 과제 등록하거나 공부 데이트 중 선택해.",
-    '혈기왕성': "안녕! 왔어! 과제 있어? 없으면 지금 바로 공부 데이트 하자!",
-    '선배형': "왔어. 과제 있으면 얘기해. 집중하고 싶으면 같이 공부하자."
-  },
   noTask: {
-    '츤데레': "...지금은 과제 없어. 뭐, 다행이지.",
-    '단데레': "...지금은 쉬어도 돼.",
-    '얀데레': "과제 없어! 나랑 놀자!",
-    '쿨데레': "현재 과제 없음. 예습 권장.",
-    '혈기왕성': "지금은 자유 시간! 파이팅!",
-    '선배형': "지금은 여유 있어. 예습해두자."
+    '츤데레': "...지금은 과제 없어. 과제 등록하거나 같이 공부하든가.",
+    '단데레': "...지금은 과제 없어. 같이 정리하거나 공부 데이트 어때?",
+    '얀데레': "과제 없어! 그럼 지금 바로 공부 데이트하자! 아니면 과제 등록해줘!",
+    '쿨데레': "현재 과제 없음. 과제 등록 또는 공부 데이트 권장.",
+    '혈기왕성': "지금은 자유 시간! 과제 등록하거나 공부 데이트 하자!",
+    '선배형': "지금은 여유 있어. 과제 미리 등록해두거나 같이 공부하자."
   },
   gt7: {
     '츤데레': "있는 거 알지?",
@@ -1948,7 +1939,7 @@ function renderRegisterStep2() {
   f.style.display = 'flex';
   f.style.flexDirection = 'column';
   f.innerHTML =
-    '<input id="reg-deadline" type="date" style="width:100%;position:relative;z-index:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;">' +
+    '<input id="reg-deadline" type="date" onclick="event.stopPropagation()" style="width:100%;position:relative;z-index:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,122,178,.18);border-radius:10px;padding:9px 12px;color:rgba(255,255,255,.92);font-size:13px;outline:none;">' +
     '<div style="display:flex;gap:8px;">' +
     '  <button id="reg-prev2" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);font-weight:800;cursor:pointer;">← 이전</button>' +
     '  <button id="reg-next2" style="flex:2;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--pink),#d9549a);color:#fff;font-weight:800;cursor:pointer;">다음</button>' +
@@ -2403,10 +2394,6 @@ function typeText(text, highlight = false) {
     if (i < chars.length) {
       el.textContent += chars[i++];
       _tid = setTimeout(next, 38);
-      if (i === 1) {
-        // Show guide if character refuses.
-        if (String(text).indexOf('...지금은 말하기 싫어.') !== -1) maybeGuideForRefusal();
-      }
     }
   }
   next();
