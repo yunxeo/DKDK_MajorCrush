@@ -340,12 +340,7 @@
     .scene-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(26,15,46,.18) 0%,
-        rgba(26,15,46,.45) 55%,
-        rgba(26,15,46,1)   100%
-      );
+      transition: background 1.5s ease;
     }
 
     /* ───────────── COURSE DROPDOWN (게임 화면 좌상단) ───────────── */
@@ -1088,6 +1083,18 @@
       100% { opacity: 0; transform: translate(-50%, -38%); }
     }
 
+    @keyframes heart-float {
+      0%   { opacity: 1; transform: translateY(0) scale(1) rotate(var(--rot)); }
+      100% { opacity: 0; transform: translateY(-120px) scale(0.5) rotate(var(--rot)); }
+    }
+    .heart-particle {
+      position: fixed;
+      pointer-events: none;
+      font-size: 20px;
+      z-index: 8999;
+      animation: heart-float 1.2s ease-out forwards;
+    }
+
     ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -1253,6 +1260,16 @@
       <button class="btn-close" onclick="closeTasks()">닫기</button>
     </div>
     <div class="tasks-list" id="tasks-list"></div>
+  </div>
+</div>
+
+<div id="task-guide-toast" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);width:calc(100% - 40px);max-width:350px;background:rgba(10,6,20,0.96);border:1px solid rgba(255,122,178,0.4);border-radius:14px;padding:12px 16px;z-index:9000;box-shadow:0 8px 24px rgba(0,0,0,0.3);">
+  <div style="font-size:12px;color:rgba(255,255,255,0.86);line-height:1.6;">
+    💡 내 과제함에서 과제를 완료하면 호감도가 올라가요! 호감도가 쌓여 단계가 오르면 캐릭터와의 관계가 진전돼요 💕
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px;">
+    <button onclick="closeTaskGuideToast()" style="flex:1;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.5);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;">닫기</button>
+    <button onclick="neverShowTaskGuideToast()" style="flex:1;padding:8px;background:rgba(255,122,178,0.15);border:1px solid rgba(255,122,178,0.4);border-radius:10px;color:#FF7AB2;font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;">다시 보지 않기</button>
   </div>
 </div>
 
@@ -1475,7 +1492,7 @@ function renderCourses() {
         <span class="cc-num">과목 ${i+1}</span>
         <button class="btn-del" onclick="delCourse(${i})">삭제</button>
       </div>
-      <input class="cc-input" placeholder="과목명을 입력하세요" value="${esc(c.name)}" oninput="setName(${i},this.value)">
+      <input class="cc-input" placeholder="이번 학기에 듣는 과목명을 입력하세요 (예: 통계학입문)" value="${esc(c.name)}" oninput="setName(${i},this.value)">
       <div class="sec-label">성별</div>
       <div class="gender-row">
         ${GENDERS.map(g=>`<button class="btn-gender${c.gender===g?' sel':''}" onclick="setGender(${i},'${g}',this)">${g}</button>`).join('')}
@@ -1554,7 +1571,42 @@ function openGuide() {
   if (ov) ov.classList.add('show');
 }
 
+function showTaskGuideToast() {
+  if (localStorage.getItem('dkdk_task_guide_shown')) return;
+  document.getElementById('task-guide-toast').style.display = 'block';
+}
+function closeTaskGuideToast() {
+  document.getElementById('task-guide-toast').style.display = 'none';
+}
+function neverShowTaskGuideToast() {
+  localStorage.setItem('dkdk_task_guide_shown', '1');
+  closeTaskGuideToast();
+}
+
+function spawnHeartParticles() {
+  const charImg = document.getElementById('char-img');
+  if (!charImg) return;
+  const rect = charImg.getBoundingClientRect();
+  const emojis = ['💕', '💗', '💖', '✨', '⭐'];
+  for (let i = 0; i < 12; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'heart-particle';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      const x = rect.left + Math.random() * rect.width;
+      const y = rect.top + rect.height * 0.3 + Math.random() * rect.height * 0.4;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.setProperty('--rot', (Math.random() * 40 - 20) + 'deg');
+      el.style.animationDelay = (Math.random() * 0.3) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1800);
+    }, i * 60);
+  }
+}
+
 function openStagePopup(stageName, line) {
+  spawnHeartParticles();
   document.getElementById('stage-popup-name').textContent = stageName;
   document.getElementById('stage-popup-line').textContent = line;
   document.getElementById('stage-popup').classList.add('show');
@@ -1725,11 +1777,30 @@ function getStage(v) {
   return st;
 }
 
+function updateSceneOverlay(affection) {
+  const overlay = document.querySelector('.scene-overlay');
+  if (!overlay) return;
+  let topColor, midColor;
+  if (affection >= 80)      { topColor = 'rgba(80,20,40,.18)';  midColor = 'rgba(60,15,30,.45)'; }
+  else if (affection >= 60) { topColor = 'rgba(60,10,40,.18)';  midColor = 'rgba(50,10,35,.45)'; }
+  else if (affection >= 40) { topColor = 'rgba(40,10,50,.18)';  midColor = 'rgba(35,10,45,.45)'; }
+  else if (affection >= 20) { topColor = 'rgba(10,20,60,.18)';  midColor = 'rgba(10,15,50,.45)'; }
+  else                      { topColor = 'rgba(26,15,46,.18)';  midColor = 'rgba(26,15,46,.45)'; }
+  overlay.style.background = `linear-gradient(to bottom, ${topColor} 0%, ${midColor} 55%, rgba(26,15,46,1) 100%)`;
+}
+
 function updateAffUI(v) {
   v = Math.max(0, Math.min(100, v));
-  document.getElementById('aff-bar').style.width = v + '%';
+  const bar = document.getElementById('aff-bar');
+  bar.style.width = v + '%';
   document.getElementById('aff-num').textContent = v + ' / 100';
   document.getElementById('aff-stage').textContent = getStage(v).name;
+  if (v >= 80)      bar.style.background = 'linear-gradient(90deg, #FF7AB2, #FFD700)';
+  else if (v >= 60) bar.style.background = 'linear-gradient(90deg, #FF7AB2, #ff4da6)';
+  else if (v >= 40) bar.style.background = 'linear-gradient(90deg, #FF7AB2, #a78bfa)';
+  else if (v >= 20) bar.style.background = 'linear-gradient(90deg, #7ACFFF, #FF7AB2)';
+  else              bar.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.5))';
+  updateSceneOverlay(v);
 }
 
 function changeAff(delta) {
@@ -1824,52 +1895,52 @@ const COURSE_COLORS = ['#FF7AB2', '#7ACFFF', '#a78bfa', '#34d399', '#fbbf24', '#
 
 const PERSONA_LINES = {
   noTask: {
-    '츤데레': "...지금은 과제 없어. 과제 등록하거나 같이 공부하든가.",
-    '단데레': "...지금은 과제 없어. 같이 정리하거나 공부 데이트 어때?",
-    '얀데레': "과제 없어! 그럼 지금 바로 공부 데이트하자! 아니면 과제 등록해줘!",
-    '쿨데레': "현재 과제 없음. 과제 등록 또는 공부 데이트 권장.",
-    '혈기왕성': "지금은 자유 시간! 과제 등록하거나 공부 데이트 하자!",
-    '선배형': "지금은 여유 있어. 과제 미리 등록해두거나 같이 공부하자."
+    '츤데레': ["...지금은 과제 없어. 할 거 있으면 말하거나 같이 공부하든가.", "...오늘은 여유 있네. 뭐 할 거 없어?", "과제 없으면 그냥 공부 데이트라도 하자."],
+    '단데레': ["...지금은 과제 없어. 같이 정리하거나 공부 데이트 어때?", "...오늘은 쉬어도 될 것 같아. 그래도 뭔가 하고 싶으면 말해.", "...과제 없는 날엔 예습이라도 같이 할까?"],
+    '얀데레': ["과제 없어! 그럼 지금 바로 공부 데이트하자! 아니면 할 거 있으면 알려줘!", "과제 없으면 나랑 놀아야지! 공부 데이트 하자!", "오늘은 나만 봐도 돼! 과제 없잖아!"],
+    '쿨데레': ["현재 과제 없음. 할 일 있으면 알려주거나 공부 데이트 권장.", "과제 없음 확인. 예습이나 공부 데이트 추천.", "여유 시간. 효율적으로 쓰고 싶으면 말해."],
+    '혈기왕성': ["지금은 자유 시간! 과제 등록하거나 공부 데이트 하자!", "과제 없다고 쉬면 안 되지! 공부 데이트 어때?", "오늘은 예습할까? 아니면 그냥 공부 데이트 하자!"],
+    '선배형': ["지금은 여유 있어. 할 거 있으면 미리 적어두거나 같이 공부하자.", "과제 없는 날이 예습하기 좋아. 같이 할까?", "여유 있을 때 미리 준비해두는 게 좋아. 뭐 할까?"]
   },
   gt7: {
-    '츤데레': "있는 거 알지?",
-    '단데레': "천천히 준비해.",
-    '얀데레': "같이 준비하자!",
-    '쿨데레': "기한 확인해.",
-    '혈기왕성': "파이팅! 아직 여유 있어!",
-    '선배형': "미리 준비하는 게 좋아."
+    '츤데레': ["있는 거 알지?", "아직 여유 있어. 근데 미루지는 마.", "마감 멀다고 방심하지 마."],
+    '단데레': ["천천히 준비해.", "아직 시간 있어. 같이 준비하자.", "서두를 필요는 없지만 미리 해두자."],
+    '얀데레': ["같이 준비하자!", "아직 시간 있어! 근데 잊으면 안 돼!", "내가 옆에 있을게! 같이 하자!"],
+    '쿨데레': ["기한 확인해.", "아직 여유 있음. 계획 세워.", "일정 관리 필요. 미리 준비 권장."],
+    '혈기왕성': ["파이팅! 아직 여유 있어!", "미리 시작하면 더 여유롭지!", "아직 시간 있어! 같이 달려보자!"],
+    '선배형': ["미리 준비하는 게 좋아.", "아직 여유 있어. 계획 세워두자.", "일찍 시작할수록 좋아. 같이 해볼까?"]
   },
   le7: {
-    '츤데레': "슬슬 해야 할 것 같은데.",
-    '단데레': "일주일 남았어. 서두르자.",
-    '얀데레': "일주일이야! 같이 하자!",
-    '쿨데레': "D-7. 계획 세워.",
-    '혈기왕성': "일주일! 같이 달려보자!",
-    '선배형': "이번 주 안에 시작해두자."
+    '츤데레': ["슬슬 해야 할 것 같은데.", "일주일 남았어. 이제 슬슬 해.", "아직도 안 했어? 일주일밖에 없어."],
+    '단데레': ["일주일 남았어. 서두르자.", "...슬슬 시작해야 할 것 같아.", "일주일이야. 같이 준비하자."],
+    '얀데레': ["일주일이야! 같이 하자!", "일주일밖에 없어! 지금 시작하자!", "빨리 같이 해야 해! 일주일이라고!"],
+    '쿨데레': ["D-7. 계획 세워.", "일주일 남음. 지금 시작 권장.", "7일 남았어. 오늘부터 준비해."],
+    '혈기왕성': ["일주일! 같이 달려보자!", "일주일 남았어! 파이팅!", "지금 시작하면 충분해! 같이 하자!"],
+    '선배형': ["이번 주 안에 시작해두자.", "일주일 남았어. 오늘 조금씩 시작하자.", "미루지 말고 지금 시작하자."]
   },
   le3: {
-    '츤데레': "3일밖에 없어. 빨리해.",
-    '단데레': "3일 남았어. 걱정돼.",
-    '얀데레': "3일 남았어! 지금 당장 해!",
-    '쿨데레': "D-3. 지금 시작해.",
-    '혈기왕성': "3일! 지금 당장 시작하자!",
-    '선배형': "3일 남았어. 서두르자."
+    '츤데레': ["3일밖에 없어. 빨리해.", "3일 남았어. 진짜로.", "아직도 안 했어? 3일이야."],
+    '단데레': ["3일 남았어. 걱정돼.", "...3일이야. 같이 하자.", "시간 별로 없어. 서두르자."],
+    '얀데레': ["3일 남았어! 지금 당장 해!", "3일이야! 나랑 같이 하자!", "빨리 해야 해! 3일밖에 없어!"],
+    '쿨데레': ["D-3. 지금 시작해.", "3일 남음. 즉시 착수 필요.", "72시간 남았어. 지금 해."],
+    '혈기왕성': ["3일! 지금 당장 시작하자!", "3일 남았어! 할 수 있어! 파이팅!", "지금 바로 시작하자! 3일이야!"],
+    '선배형': ["3일 남았어. 서두르자.", "오늘 안에 시작해야 해.", "3일이야. 지금 같이 시작하자."]
   },
   d1: {
-    '츤데레': "내일까지야. 설마 아직도?",
-    '단데레': "내일이야. 괜찮아?",
-    '얀데레': "내일이야! 지금 당장!",
-    '쿨데레': "D-1. 오늘 안에 완료해.",
-    '혈기왕성': "내일까지야! 지금 해!",
-    '선배형': "오늘 안에 끝내자."
+    '츤데레': ["내일까지야. 설마 아직도?", "내일이야. 진짜로.", "오늘 안에 끝내야 해. 내일이 마감이야."],
+    '단데레': ["내일이야. 괜찮아?", "...내일까지야. 같이 끝내자.", "시간 없어. 지금 해야 해."],
+    '얀데레': ["내일이야! 지금 당장!", "내일 마감이야! 나랑 같이 하자!", "지금 당장 해야 해! 내일이라고!"],
+    '쿨데레': ["D-1. 오늘 안에 완료해.", "내일 마감. 지금 즉시 시작.", "오늘이 사실상 마지막이야."],
+    '혈기왕성': ["내일까지야! 지금 해!", "내일 마감! 파이팅! 할 수 있어!", "지금 당장 시작하자! 내일이야!"],
+    '선배형': ["오늘 안에 끝내자.", "내일 마감이야. 지금 같이 끝내자.", "오늘 안에 완료해야 해."]
   },
   d0: {
-    '츤데레': "오늘까지야. 진짜로.",
-    '단데레': "오늘이야. 할 수 있어.",
-    '얀데레': "오늘이야! 꼭 해야 해!",
-    '쿨데레': "오늘 마감. 지금 제출해.",
-    '혈기왕성': "오늘이야! 파이팅!",
-    '선배형': "오늘 마감이야. 같이 끝내자."
+    '츤데레': ["오늘까지야. 진짜로.", "오늘이 마감이야. 뭐 해?", "오늘 안에 끝내. 진짜야."],
+    '단데레': ["오늘이야. 할 수 있어.", "...오늘 마감이야. 같이 끝내자.", "오늘이야. 포기하지 마."],
+    '얀데레': ["오늘이야! 꼭 해야 해!", "오늘 마감이야! 지금 당장!", "오늘 안에 끝내야 해! 같이 하자!"],
+    '쿨데레': ["오늘 마감. 지금 제출해.", "D-day. 즉시 완료 필요.", "오늘이 마감이야. 지금 해."],
+    '혈기왕성': ["오늘이야! 파이팅!", "오늘 마감! 할 수 있어! 지금 해!", "마지막 기회야! 파이팅!"],
+    '선배형': ["오늘 마감이야. 같이 끝내자.", "오늘 안에 해야 해. 옆에 있을게.", "마지막이야. 같이 끝내자."]
   }
 };
 
@@ -1986,11 +2057,15 @@ function showAutoLineForCourse(i) {
   const persona = personaOfCourse(i);
   const t = nextPendingTask(i);
   let line;
-  if (!t) line = (PERSONA_LINES.noTask[persona] || PERSONA_LINES.noTask['츤데레']);
-  else {
+  if (!t) {
+    const lines = PERSONA_LINES.noTask[persona] || PERSONA_LINES.noTask['츤데레'];
+    line = Array.isArray(lines) ? lines[Math.floor(Math.random() * lines.length)] : lines;
+  } else {
     const d = daysUntil(t.deadline);
     const key = autoKeyForDays(d);
-    line = t.name + ', ' + (PERSONA_LINES[key][persona] || PERSONA_LINES[key]['츤데레']);
+    const lines = PERSONA_LINES[key][persona] || PERSONA_LINES[key]['츤데레'];
+    const picked = Array.isArray(lines) ? lines[Math.floor(Math.random() * lines.length)] : lines;
+    line = t.name + ', ' + picked;
   }
   save();
   hideForm();
@@ -2098,6 +2173,7 @@ function renderRegisterStep3() {
     typeText(REG_LINES.done[persona] || REG_LINES.done['츤데레']);
     _flow.active = false;
     setTimeout(function () { showAutoLineForCourse(S.curIdx); }, 2000);
+    setTimeout(function () { showTaskGuideToast(); }, 2500);
   };
 }
 
